@@ -17,7 +17,7 @@ class _FinancePageState extends State<FinancePage> {
   String? _filterType; // null = all, 'income', 'expense'
 
   // Formatters
-  final currencyFmt = NumberFormat.simpleCurrency();
+  final currencyFmt = NumberFormat.simpleCurrency(name: 'ZMW');
   final dateFmt = DateFormat('MMM dd, yyyy • hh:mm a');
 
   @override

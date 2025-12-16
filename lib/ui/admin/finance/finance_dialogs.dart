@@ -72,7 +72,7 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                   Expanded(
                     child: TextFormField(
                       controller: _amountCtrl,
-                      decoration: const InputDecoration(labelText: "Amount", prefixText: "\$"),
+                      decoration: const InputDecoration(labelText: "Amount", prefixText: "ZMW"),
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
                       validator: (v) => v!.isEmpty ? "Required" : null,
                     ),
@@ -152,7 +152,7 @@ class _PayFeesDialogState extends State<PayFeesDialog> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _amountCtrl,
-                decoration: const InputDecoration(labelText: "Payment Amount", prefixText: "\$"),
+                decoration: const InputDecoration(labelText: "Payment Amount", prefixText: "ZMW"),
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 validator: (v) => v!.isEmpty ? "Required" : null,
               ),

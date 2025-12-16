@@ -189,7 +189,7 @@ class _FinanceOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currency = NumberFormat.simpleCurrency();
+    final currency = NumberFormat.simpleCurrency(name: 'ZMW');
 
     return Container(
       width: double.infinity,
@@ -251,7 +251,7 @@ class _FinanceOverviewCard extends StatelessWidget {
   }
 
   Widget _statItem(String label, double amount, Color color, IconData icon) {
-    final currency = NumberFormat.simpleCurrency();
+    final currency = NumberFormat.simpleCurrency(name: 'ZMW');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
