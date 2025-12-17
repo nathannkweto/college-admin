@@ -42348,7 +42348,7 @@ if(r.$2(a,j)>0){s[b]=j
 b=o}}s[b]=a}}
 A.Ky.prototype={
 H(a){var s=null
-return new A.AA(B.C4,"College Portal",A.vv(s,A.aCy(B.al,s,s,B.bi),!0),!1,s)}}
+return new A.AA(B.C4,"MATEM",A.vv(s,A.aCy(B.al,s,s,B.bi),!0),!1,s)}}
 A.JO.prototype={
 H(a){return new A.yw(new A.a0R(),null,null,t.nO)}}
 A.a0R.prototype={
@@ -42542,7 +42542,7 @@ break
 default:s=B.o8}r=new A.akp(n,l,a)
 if(l){q=A.cg(m,m,B.o,B.c2,m,m,m,1,m,m,m,m,m)
 p=A.hy(m,m,B.IV,m,m,new A.aku(n),m,m,m)
-q=new A.xP(p,B.ZE,new A.NJ(q,B.To,m),0,B.k,B.k,new A.VK(m,1,1/0,57),m)}else q=m
+q=new A.xP(p,B.ZD,new A.NJ(q,B.To,m),0,B.k,B.k,new A.VK(m,1,1/0,57),m)}else q=m
 p=l?new A.Lj(r.$0(),m):m
 o=A.b([],t.p)
 if(!l)o.push(r.$0())
@@ -42574,7 +42574,7 @@ return s==null?null:s.atp()},
 $S:0}
 A.Jv.prototype={
 H(a){var s=this,r=null,q=t.p,p=A.jS(r,A.bF(A.b([A.cl(!1,s.c,B.Jm,r,r,1,!1,r,r,new A.a0h()),A.cl(!1,s.d,B.JD,r,r,1,!1,r,r,new A.a0i()),A.cl(!1,s.e,B.JE,r,B.bE,1,!1,r,r,new A.a0j())],q),B.z,B.n,B.aq),s.f)
-return A.oN(A.b([A.je(!1,B.cW,r,r,r,r,r,r,new A.a0k(a),r,r),A.ht(!1,B.ZD,r,r,r,r,r,r,new A.a0l(s,a),r,r)],q),p,B.ZN)}}
+return A.oN(A.b([A.je(!1,B.cW,r,r,r,r,r,r,new A.a0k(a),r,r),A.ht(!1,B.ZC,r,r,r,r,r,r,new A.a0l(s,a),r,r)],q),p,B.ZN)}}
 A.a0h.prototype={
 $1(a){return a.length===0?"Required":null},
 $S:7}
@@ -42769,7 +42769,7 @@ a6S(){var s=null,r=A.tL(B.J7,B.B8,new A.amV(this),s),q=this.f.length
 return A.bF(A.b([new A.di(B.jy,s,s,r,s),B.aa,A.c8(new A.Ap(new A.CD(new A.amW(this),q,!0,!0,!0,s),s,B.a2,!1,s,s,B.jz,!1,s,q,B.T,s,s,B.H,B.ap,s),1)],t.p),B.a5,B.n,B.t)},
 a6R(){var s=null,r=A.eS(16),q=A.t_(B.c2),p=A.b([new A.bq(0,B.S,B.bA,B.h,10)],t.V),o=t.p,n=A.b([B.Jb,B.bx],o),m=this.r
 if(m!=null)B.b.W(n,A.b([B.Zu,A.b_("Semester "+m.b+" ("+m.c+")",s,s,s,s,B.B3,s,s,s),B.h3,B.fi,B.aa,B.Za],o))
-else B.b.W(n,A.b([B.Z8,B.aa,B.ZA],o))
+else B.b.W(n,A.b([B.Z8,B.aa,B.Zz],o))
 n.push(B.bx)
 n.push(A.cA(A.ht(!1,B.Bc,s,s,s,s,s,s,new A.amT(this),s,A.l1(s,s,B.bi,s,s,s,s,s,s,B.k,s,s,B.oo,s,s,s,s,s,s,s)),s,1/0))
 return A.dq(A.cg(s,A.bF(n,B.z,B.n,B.aq),B.o,s,B.CE,new A.cn(B.k,s,q,r,p,s,B.a8),s,s,s,B.I1,s,s,s),s,s)}}
@@ -42902,7 +42902,7 @@ H(a){var s=this,r=null,q=A.eS(16),p=A.b([new A.bq(0,B.S,A.ap(13,B.bt.v()>>>16&25
 return A.c8(A.cg(r,A.bF(A.b([A.c2(A.b([A.cg(r,A.i9(s.e,n,r,24),B.o,r,r,new A.cn(m,r,r,l,r,r,B.a8),r,r,r,B.fn,r,r,r)],k),B.z,B.ca,B.t,0,r),B.bx,A.b_(s.d,r,r,r,r,B.WY,r,r,r),B.iZ,A.b_(s.c,r,r,r,r,A.dn(r,r,B.cn,r,r,r,r,r,r,r,r,14,r,r,r,r,r,!0,r,r,r,r,r,r,r,r),r,r,r)],k),B.a5,B.n,B.t),B.o,r,r,new A.cn(B.k,r,o,q,p,r,B.a8),r,r,r,B.ct,r,r,r),1)}}
 A.Tt.prototype={
 H(a){var s=null,r=A.azp("ZMW"),q=A.eS(16),p=A.t_(B.c2),o=this.c,n=o.c,m=r.nc(n),l=t.p
-return A.cg(s,A.c2(A.b([A.c8(A.bF(A.b([B.ZI,B.cU,A.b_(m,s,s,s,s,A.dn(s,s,n>=0?B.l:B.bs,s,s,s,s,s,s,s,s,36,s,s,B.ax,s,s,!0,s,s,s,s,s,s,s,s),s,s,s),B.cU,A.cg(s,B.Zk,B.o,s,s,new A.cn(B.k4,s,s,A.eS(4),s,s,B.a8),s,s,s,B.ko,s,s,s)],l),B.a5,B.n,B.t),2),A.cg(s,s,B.o,B.c2,s,s,s,80,s,s,s,s,1),A.c8(new A.bd(B.I0,A.c2(A.b([this.Td("Total Income",o.a,B.bP,B.It),this.Td("Total Expenses",o.b,B.bs,B.Is)],l),B.z,B.ls,B.t,0,s),s),3)],l),B.z,B.n,B.t,0,s),B.o,s,s,new A.cn(B.k,s,p,q,s,s,B.a8),s,s,s,B.ct,s,s,1/0)},
+return A.cg(s,A.c2(A.b([A.c8(A.bF(A.b([B.ZH,B.cU,A.b_(m,s,s,s,s,A.dn(s,s,n>=0?B.l:B.bs,s,s,s,s,s,s,s,s,36,s,s,B.ax,s,s,!0,s,s,s,s,s,s,s,s),s,s,s),B.cU,A.cg(s,B.Zk,B.o,s,s,new A.cn(B.k4,s,s,A.eS(4),s,s,B.a8),s,s,s,B.ko,s,s,s)],l),B.a5,B.n,B.t),2),A.cg(s,s,B.o,B.c2,s,s,s,80,s,s,s,s,1),A.c8(new A.bd(B.I0,A.c2(A.b([this.Td("Total Income",o.a,B.bP,B.It),this.Td("Total Expenses",o.b,B.bs,B.Is)],l),B.z,B.ls,B.t,0,s),s),3)],l),B.z,B.n,B.t,0,s),B.o,s,s,new A.cn(B.k,s,p,q,s,s,B.a8),s,s,s,B.ct,s,s,1/0)},
 Td(a,b,c,d){var s=null,r=A.azp("ZMW"),q=t.p
 return A.bF(A.b([A.c2(A.b([A.i9(d,c,s,16),B.Tr,A.b_(a,s,s,s,s,B.V8,s,s,s)],q),B.z,B.n,B.t,0,s),B.cU,A.b_(r.nc(b),s,s,s,s,A.dn(s,s,c,s,s,s,s,s,s,s,s,20,s,s,B.ax,s,s,!0,s,s,s,s,s,s,s,s),s,s,s)],q),B.a5,B.n,B.t)}}
 A.Bt.prototype={
@@ -43754,7 +43754,7 @@ break
 case 6:case 1:return A.L(q,r)
 case 2:return A.K(o.at(-1),r)}})
 return A.M($async$yk,r)},
-H(a){var s,r,q=this,p=null,o=A.NS(a,!0,t.W0).d,n=A.b([B.Jc,B.bx,B.Zy,B.h3],t.p),m=q.r
+H(a){var s,r,q=this,p=null,o=A.NS(a,!0,t.W0).d,n=A.b([B.Jc,B.bx,B.ZI,B.h3],t.p),m=q.r
 if(m!=null){s=A.eS(8)
 r=A.t_(B.nB)
 n.push(A.cg(p,A.b_(m,p,p,p,p,A.dn(p,p,B.f8,p,p,p,p,p,p,p,p,p,p,p,p,p,p,!0,p,p,p,p,p,p,p,p),B.cV,p,p),B.o,p,p,new A.cn(B.f9,p,r,s,p,p,B.a8),p,p,B.hT,B.fn,p,p,p))}n.push(A.cl(!1,q.d,B.Jt,p,p,1,!1,p,p,new A.aqe()))
@@ -96771,9 +96771,9 @@ B.iZ=new A.dx(null,4,null,null)
 B.ZR=new A.aB("Manage student enrollments",null,B.cE,null,null,null,null,null,null,null,null)
 B.LO=s([B.Zl,B.iZ,B.ZR],t.p)
 B.Gm=new A.p5(B.a2,B.n,B.t,B.a5,null,B.by,null,0,B.LO,null)
-B.ZC=new A.aB("Finance & Accounting",null,B.eD,null,null,null,null,null,null,null,null)
+B.ZB=new A.aB("Finance & Accounting",null,B.eD,null,null,null,null,null,null,null,null)
 B.Zo=new A.aB("Track revenue and expenses",null,B.cE,null,null,null,null,null,null,null,null)
-B.Mp=s([B.ZC,B.iZ,B.Zo],t.p)
+B.Mp=s([B.ZB,B.iZ,B.Zo],t.p)
 B.Gn=new A.p5(B.a2,B.n,B.t,B.a5,null,B.by,null,0,B.Mp,null)
 B.ZS=new A.aB("Lecturers",null,B.eD,null,null,null,null,null,null,null,null)
 B.ZQ=new A.aB("Manage faculty members",null,B.cE,null,null,null,null,null,null,null,null)
@@ -97414,8 +97414,8 @@ B.Zi=new A.aB("Date",null,null,null,null,null,null,null,null,null,null)
 B.GS=new A.fU(B.Zi)
 B.ZK=new A.aB("Description",null,null,null,null,null,null,null,null,null,null)
 B.GN=new A.fU(B.ZK)
-B.ZH=new A.aB("Type",null,null,null,null,null,null,null,null,null,null)
-B.GP=new A.fU(B.ZH)
+B.ZG=new A.aB("Type",null,null,null,null,null,null,null,null,null,null)
+B.GP=new A.fU(B.ZG)
 B.a_7=new A.aB("Amount",null,null,B.dD,null,null,null,null,null,null,null)
 B.GM=new A.fU(B.a_7)
 B.Lz=s([B.GS,B.GN,B.GP,B.GM],t.UR)
@@ -97493,8 +97493,8 @@ B.a_4=new A.aB("ID",null,null,null,null,null,null,null,null,null,null)
 B.GR=new A.fU(B.a_4)
 B.a_1=new A.aB("Department Name",null,null,null,null,null,null,null,null,null,null)
 B.GT=new A.fU(B.a_1)
-B.Zz=new A.aB("Code",null,null,null,null,null,null,null,null,null,null)
-B.GO=new A.fU(B.Zz)
+B.Zy=new A.aB("Code",null,null,null,null,null,null,null,null,null,null)
+B.GO=new A.fU(B.Zy)
 B.Ma=s([B.GR,B.GT,B.GO],t.UR)
 B.Ua=new A.nP("Upload Grades",null)
 B.Ud=new A.nP("Student Transcript",null)
@@ -98963,8 +98963,8 @@ B.Zb=new A.aB("Results uploaded successfully!",null,null,null,null,null,null,nul
 B.TF=new A.kh(B.Zb,B.bP,null,null,null,null,null,null,null,null,null,null,null,B.e0,!1,null,null,null,B.H,null)
 B.ZU=new A.aB("Success!",null,null,null,null,null,null,null,null,null,null)
 B.TG=new A.kh(B.ZU,B.bP,null,null,null,null,null,null,null,null,null,null,null,B.hS,!1,null,null,null,B.H,null)
-B.ZG=new A.aB("Student registered successfully",null,null,null,null,null,null,null,null,null,null)
-B.TH=new A.kh(B.ZG,B.bP,null,null,null,null,null,null,null,null,null,null,null,B.e0,!1,null,null,null,B.H,null)
+B.ZF=new A.aB("Student registered successfully",null,null,null,null,null,null,null,null,null,null)
+B.TH=new A.kh(B.ZF,B.bP,null,null,null,null,null,null,null,null,null,null,null,B.e0,!1,null,null,null,B.H,null)
 B.Az=new A.CH(0,"permissive")
 B.TI=new A.CH(1,"normal")
 B.TJ=new A.CH(2,"forced")
@@ -99021,10 +99021,10 @@ B.AN=new A.nQ(4,"fill")
 B.Uh=new A.nQ(5,"intrinsicHeight")
 B.bU=new A.l(!0,null,null,null,null,null,null,B.ax,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.Zm=new A.aB("Course",null,B.bU,null,null,null,null,null,null,null,null)
-B.ZB=new A.aB("Code",null,B.bU,null,null,null,null,null,null,null,null)
-B.ZF=new A.aB("Score",null,B.bU,null,null,null,null,null,null,null,null)
+B.ZA=new A.aB("Code",null,B.bU,null,null,null,null,null,null,null,null)
+B.ZE=new A.aB("Score",null,B.bU,null,null,null,null,null,null,null,null)
 B.Zh=new A.aB("Grade",null,B.bU,null,null,null,null,null,null,null,null)
-B.Mo=s([B.Zm,B.ZB,B.ZF,B.Zh],t.p)
+B.Mo=s([B.Zm,B.ZA,B.ZE,B.Zh],t.p)
 B.Ui=new A.eK(null,null,B.Mo)
 B.mg=new A.dx(null,null,null,null)
 B.Ls=s([B.cU,B.mg,B.mg,B.mg],t.p)
@@ -99394,14 +99394,14 @@ B.Zv=new A.aB("Use the button above to register a new lecturer.",null,B.cE,null,
 B.Zw=new A.aB("Receive Fees",null,null,null,null,null,null,null,null,null,null)
 B.Yf=new A.l(!0,null,null,null,null,null,20,B.ax,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.Zx=new A.aB("Financial Health",null,B.Yf,null,null,null,null,null,null,null,null)
-B.Zy=new A.aB("College Portal",null,B.B3,B.cV,null,null,null,null,null,null,null)
-B.ZA=new A.aB("The academic system is currently paused. Start a new semester to resume operations.",null,null,B.cV,null,null,null,null,null,null,null)
+B.Zz=new A.aB("The academic system is currently paused. Start a new semester to resume operations.",null,null,B.cV,null,null,null,null,null,null,null)
 B.B8=new A.aB("Add Program",null,null,null,null,null,null,null,null,null,null)
-B.ZD=new A.aB("Create",null,null,null,null,null,null,null,null,null,null)
-B.ZE=new A.aB("College Admin",null,null,null,null,null,null,null,null,null,null)
-B.ZI=new A.aB("Net Balance",null,B.cE,null,null,null,null,null,null,null,null)
+B.ZC=new A.aB("Create",null,null,null,null,null,null,null,null,null,null)
+B.ZD=new A.aB("College Admin",null,null,null,null,null,null,null,null,null,null)
+B.ZH=new A.aB("Net Balance",null,B.cE,null,null,null,null,null,null,null,null)
 B.B9=new A.aB("Register Student",null,null,null,null,null,null,null,null,null,null)
 B.Ba=new A.aB("Register Lecturer",null,null,null,null,null,null,null,null,null,null)
+B.ZI=new A.aB("MATEM College",null,B.B3,B.cV,null,null,null,null,null,null,null)
 B.WP=new A.l(!0,null,null,null,null,null,13,B.ax,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
 B.ZJ=new A.aB("Administrator",null,B.WP,null,null,null,null,null,null,null,null)
 B.ZL=new A.aB("Receive Student Fees",null,null,null,null,null,null,null,null,null,null)
