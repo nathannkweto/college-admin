@@ -55,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
                   const Icon(Icons.school, size: 64, color: Colors.blue),
                   const SizedBox(height: 24),
                   const Text(
-                    "College Portal",
+                    "MATEM College",
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
