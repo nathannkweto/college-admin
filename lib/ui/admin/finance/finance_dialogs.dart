@@ -171,7 +171,7 @@ class _PayFeesDialogState extends State<PayFeesDialog> {
                 controller: _studentCodeCtrl,
                 decoration: const InputDecoration(
                     labelText: "Student ID",
-                    hintText: "e.g. STD-2025-001",
+                    hintText: "e.g. BSC2510001",
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.badge_outlined)
                 ),

@@ -169,7 +169,7 @@ class _UploadGradesTabState extends State<_UploadGradesTab> {
                   width: isSmall ? double.infinity : 250,
                   child: TextFormField(
                     controller: _studentCodeCtrl,
-                    decoration: const InputDecoration(labelText: "Student ID (e.g. STD001)", border: OutlineInputBorder()),
+                    decoration: const InputDecoration(labelText: "Student ID (e.g. BSC2510001)", border: OutlineInputBorder()),
                     validator: (v) => v!.isEmpty ? "Required" : null,
                   ),
                 ),
@@ -338,7 +338,7 @@ class _TranscriptViewTabState extends State<_TranscriptViewTab> {
             child: TextField(
               controller: _searchCtrl,
               decoration: InputDecoration(
-                  labelText: "Search by Student ID (e.g. STD2025001)",
+                  labelText: "Search by Student ID (e.g. BSC2510001)",
                   prefixIcon: const Icon(Icons.badge),
                   suffixIcon: IconButton(icon: const Icon(Icons.search), onPressed: () {}),
                   border: const OutlineInputBorder()
