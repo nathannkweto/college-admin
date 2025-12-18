@@ -1,33 +1,23 @@
 class Lecturer {
-  final int id;
-  final String firstName;
-  final String lastName;
+  final String staffId;
+  final String name;
   final String email;
-  final String phone;
-  final int departmentId;
+  final String department;
 
   Lecturer({
-    required this.id,
-    required this.firstName,
-    required this.lastName,
+    required this.staffId,
+    required this.name,
     required this.email,
-    required this.phone,
-    required this.departmentId,
+    required this.department,
   });
 
   // Placeholder factory until we have the GET spec
   factory Lecturer.fromJson(Map<String, dynamic> json) {
     return Lecturer(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      firstName: json['first_name'] ?? '',
-      lastName: json['last_name'] ?? '',
+      staffId: json['staff_id'] ?? '',
+      name: json['name'] ?? '',
       email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-      departmentId: json['department_id'] is int
-          ? json['department_id']
-          : int.tryParse(json['department_id'].toString()) ?? 0,
+      department: json['department'] ?? '',
     );
   }
-
-  String get fullName => "$firstName $lastName";
 }

@@ -19,17 +19,12 @@ class AdminDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check if we are in a mobile context (Drawer) or Desktop (Sidebar)
-    // We can infer this: if the parent is a Drawer, width is constrained differently.
-    // However, simpler is checking media query again or passing a flag.
-    // Let's rely on MediaQuery for consistency.
     final isMobile = MediaQuery.of(context).size.width < 800;
+    final double currentWidth = isMobile ? 304 : (isCollapsed ? 80 : 250);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      // On mobile, the drawer width is fixed by the parent Drawer widget usually,
-      // but we set it here to be safe.
-      width: isMobile ? 304 : (isCollapsed ? 80 : 250),
+      width: currentWidth,
       decoration: BoxDecoration(
         color: Colors.white,
         border: isMobile
@@ -38,12 +33,8 @@ class AdminDrawer extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // 1. BRANDING
-          // On mobile, we always show full branding
           AdminBranding(isCollapsed: isMobile ? false : isCollapsed),
 
-          // 2. TOGGLE BUTTON (Desktop Only)
-          // We hide the collapse arrow on mobile because it's a slide-out drawer
           if (!isMobile) ...[
             Align(
               alignment: isCollapsed ? Alignment.center : Alignment.centerRight,
@@ -58,52 +49,22 @@ class AdminDrawer extends StatelessWidget {
             const Divider(height: 1),
           ],
 
-          // 3. MENU ITEMS
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 12),
+              // This prevents horizontal overflow during the width animation
+              physics: const ClampingScrollPhysics(),
               children: [
-                _buildNavItem(
-                  context,
-                  0,
-                  "Dashboard",
-                  Icons.dashboard,
-                  isMobile,
-                ),
+                _buildNavItem(context, 0, "Dashboard", Icons.dashboard, isMobile),
                 _buildNavItem(context, 1, "Students", Icons.people, isMobile),
-                _buildNavItem(
-                  context,
-                  2,
-                  "Lecturers",
-                  Icons.co_present,
-                  isMobile,
-                ),
-                _buildNavItem(
-                  context,
-                  3,
-                  "Curriculum",
-                  Icons.category,
-                  isMobile,
-                ),
-                _buildNavItem(
-                    context,
-                    4,
-                    "Results",
-                    Icons.analytics_outlined,
-                    isMobile
-                ),
-                _buildNavItem(
-                    context,
-                    5,
-                    "Finances",
-                    Icons.account_balance_wallet_outlined,
-                    isMobile
-                ),
+                _buildNavItem(context, 2, "Lecturers", Icons.co_present, isMobile),
+                _buildNavItem(context, 3, "Curriculum", Icons.category, isMobile),
+                _buildNavItem(context, 4, "Results", Icons.analytics_outlined, isMobile),
+                _buildNavItem(context, 5, "Finances", Icons.account_balance_wallet_outlined, isMobile),
               ],
             ),
           ),
 
-          // 4. LOGOUT BUTTON
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: _buildLogoutButton(context, isMobile),
@@ -114,60 +75,79 @@ class AdminDrawer extends StatelessWidget {
   }
 
   Widget _buildNavItem(
-    BuildContext context,
-    int index,
-    String title,
-    IconData icon,
-    bool isMobile,
-  ) {
+      BuildContext context,
+      int index,
+      String title,
+      IconData icon,
+      bool isMobile,
+      ) {
     final isSelected = selectedIndex == index;
     final color = isSelected ? Colors.blue : Colors.grey.shade700;
+    final bool showFullMenu = isMobile || !isCollapsed;
 
-    // Determine if we should show icon only (Collapsed Desktop)
-    final showIconOnly = !isMobile && isCollapsed;
-
-    if (showIconOnly) {
-      return IconButton(
-        icon: Icon(icon, color: color),
-        tooltip: title,
-        onPressed: () => onIndexChanged(index),
-      );
-    }
-
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: color,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return InkWell(
+      onTap: () => onIndexChanged(index),
+      child: Container(
+        height: 48,
+        margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisAlignment: isCollapsed && !isMobile
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
+          children: [
+            const SizedBox(width: 12),
+            Icon(icon, color: color, size: 22),
+            // We use a conditional and Flexible to prevent the 19px overflow
+            if (showFullMenu) ...[
+              const SizedBox(width: 12),
+              Flexible(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  overflow: TextOverflow.ellipsis, // Clips text during animation
+                ),
+              ),
+            ],
+          ],
         ),
       ),
-      selected: isSelected,
-      selectedTileColor: Colors.blue.shade50,
-      onTap: () => onIndexChanged(index),
     );
   }
 
   Widget _buildLogoutButton(BuildContext context, bool isMobile) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final showIconOnly = !isMobile && isCollapsed;
+    final bool showFullMenu = isMobile || !isCollapsed;
 
-    if (showIconOnly) {
-      return IconButton(
-        icon: const Icon(Icons.logout, color: Colors.red),
-        tooltip: "Logout",
-        onPressed: () => auth.logout(),
-      );
-    }
-
-    return OutlinedButton.icon(
-      icon: const Icon(Icons.logout, size: 18),
-      label: const Text("Logout"),
+    return OutlinedButton(
       onPressed: () => auth.logout(),
       style: OutlinedButton.styleFrom(
         foregroundColor: Colors.red,
-        side: const BorderSide(color: Colors.red),
+        side: BorderSide(color: showFullMenu ? Colors.red : Colors.transparent),
+        padding: showFullMenu
+            ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
+            : EdgeInsets.zero,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.logout, size: 18),
+          if (showFullMenu) ...[
+            const SizedBox(width: 8),
+            const Flexible(
+              child: Text(
+                "Logout",
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -125,16 +125,19 @@ class _CurriculumPageState extends State<CurriculumPage> with SingleTickerProvid
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             ElevatedButton.icon(
-              onPressed: () => _openDialog(AddCourseDialog()),
-              icon: const Icon(Icons.book),
-              label: const Text("Add Course"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton.icon(
               onPressed: () => _openDialog(AddDepartmentDialog()),
               icon: const Icon(Icons.add),
               label: const Text("New Department"),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  foregroundColor: Colors.white
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              onPressed: () => _openDialog(AddCourseDialog()),
+              icon: const Icon(Icons.book),
+              label: const Text("Add Course"),
             ),
           ],
         ),
@@ -165,13 +168,25 @@ class _CurriculumPageState extends State<CurriculumPage> with SingleTickerProvid
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Align(
-          alignment: Alignment.centerRight,
-          child: ElevatedButton.icon(
-            onPressed: () => _openDialog(AddProgramDialog()),
-            icon: const Icon(Icons.school),
-            label: const Text("Add Program"),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => _openDialog(AddLevelDialog()), // <--- NEW BUTTON
+              icon: const Icon(Icons.layers),
+              label: const Text("Add Level"),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  foregroundColor: Colors.white
+              ),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton.icon(
+              onPressed: () => _openDialog(AddProgramDialog()),
+              icon: const Icon(Icons.school),
+              label: const Text("Add Program"),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Expanded(

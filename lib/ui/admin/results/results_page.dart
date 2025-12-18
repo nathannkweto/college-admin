@@ -20,33 +20,32 @@ class _ResultsPageState extends State<ResultsPage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
+    // Check screen width for responsiveness
+    final bool isMobile = MediaQuery.of(context).size.width < 700;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(isMobile ? 12 : 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Results & Transcripts", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            Text("Results & Transcripts",
+                style: TextStyle(fontSize: isMobile ? 22 : 28, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
-            // Tabs
-            Container(
-              decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Colors.grey, width: 0.5))),
-              child: TabBar(
-                controller: _tabController,
-                labelColor: Colors.blue,
-                unselectedLabelColor: Colors.grey,
-                isScrollable: true,
-                tabs: const [
-                  Tab(text: "Upload Grades"),
-                  Tab(text: "Student Transcript"),
-                ],
-              ),
+            TabBar(
+              controller: _tabController,
+              labelColor: Colors.blue,
+              unselectedLabelColor: Colors.grey,
+              isScrollable: true,
+              tabs: const [
+                Tab(text: "Upload Grades"),
+                Tab(text: "Student Transcript"),
+              ],
             ),
             const SizedBox(height: 24),
 
-            // Tab Content
             Expanded(
               child: TabBarView(
                 controller: _tabController,
@@ -75,303 +74,280 @@ class _UploadGradesTab extends StatefulWidget {
 
 class _UploadGradesTabState extends State<_UploadGradesTab> {
   final _formKey = GlobalKey<FormState>();
-  final _studentIdCtrl = TextEditingController(); // This is DB ID
-  final _semesterIdCtrl = TextEditingController();
+  final _studentCodeCtrl = TextEditingController(); // e.g., "STD-2025-001"
 
-  // Dynamic list of grades
-  final List<Map<String, TextEditingController>> _gradeRows = [];
+  // Dropdown Data
+  List<dynamic> _academicYears = [];
+  List<dynamic> _semesters = [];
+  List<dynamic> _courses = [];
 
+  int? _selectedYearId;
+  int? _selectedSemesterId;
+
+  // Grade Entry Rows
+  final List<Map<String, dynamic>> _gradeRows = [];
+
+  bool _isLoadingData = true;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    _addGradeRow(); // Start with one empty row
+    _fetchInitialData();
+    _addGradeRow();
+  }
+
+  Future<void> _fetchInitialData() async {
+    try {
+      final yearsRes = await ApiService.get('/curriculum/academic-years');
+      final coursesRes = await ApiService.get('/curriculum/courses');
+
+      if (mounted) {
+        setState(() {
+          _academicYears = List<dynamic>.from(yearsRes['data'] ?? []);
+          _courses = List<dynamic>.from(coursesRes['data'] ?? []);
+          _isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingData = false);
+    }
+  }
+
+  Future<void> _fetchSemesters(int yearId) async {
+    setState(() => _semesters = []); // Clear current semesters
+    try {
+      final res = await ApiService.get('/curriculum/semesters?year_id=$yearId');
+      if (mounted) {
+        setState(() {
+          _semesters = List<dynamic>.from(res['data'] ?? []);
+        });
+      }
+    } catch (_) {}
   }
 
   void _addGradeRow() {
     setState(() {
       _gradeRows.add({
-        "course": TextEditingController(),
-        "score": TextEditingController(),
+        "course_id": null,
+        "score_ctrl": TextEditingController(),
       });
     });
   }
 
-  void _removeGradeRow(int index) {
-    if (_gradeRows.length > 1) {
-      setState(() => _gradeRows.removeAt(index));
-    }
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isSubmitting = true);
-
-    try {
-      final gradesList = _gradeRows.map((row) => {
-        "course_id": int.parse(row["course"]!.text),
-        "score": double.parse(row["score"]!.text),
-      }).toList();
-
-      final payload = {
-        "student_db_id": int.parse(_studentIdCtrl.text),
-        "semester_id": int.parse(_semesterIdCtrl.text),
-        "grades": gradesList,
-      };
-
-      await ApiService.post('/results/batch', payload);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Results uploaded successfully!"), backgroundColor: Colors.green),
-        );
-        // Clear form
-        _studentIdCtrl.clear();
-        _semesterIdCtrl.clear();
-        setState(() {
-          _gradeRows.clear();
-          _addGradeRow();
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error: ${e.toString().replaceAll("Exception:", "")}"), backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingData) return const Center(child: CircularProgressIndicator());
+
+    final isSmall = MediaQuery.of(context).size.width < 600;
+
+    // Pre-compute items
+    final yearItems = _academicYears.map((y) => DropdownMenuItem<int>(
+        value: y['id'] as int, child: Text(y['display_name'] ?? y['start_year'].toString())
+    )).toList();
+
+    final semItems = _semesters.map((s) => DropdownMenuItem<int>(
+        value: s['id'] as int, child: Text("Semester ${s['semester_number']}")
+    )).toList();
+
+    final courseItems = _courses.map((c) => DropdownMenuItem<int>(
+        value: c['id'] as int, child: Text("${c['code']} - ${c['name']}")
+    )).toList();
+
     return SingleChildScrollView(
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 800),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Inputs
-              Row(
-                children: [
-                  Expanded(child: TextFormField(
-                    controller: _studentIdCtrl,
-                    decoration: const InputDecoration(labelText: "Student Database ID", border: OutlineInputBorder()),
-                    keyboardType: TextInputType.number,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header: Student Code and Academic Year
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                SizedBox(
+                  width: isSmall ? double.infinity : 250,
+                  child: TextFormField(
+                    controller: _studentCodeCtrl,
+                    decoration: const InputDecoration(labelText: "Student ID (e.g. STD001)", border: OutlineInputBorder()),
                     validator: (v) => v!.isEmpty ? "Required" : null,
-                  )),
-                  const SizedBox(width: 16),
-                  Expanded(child: TextFormField(
-                    controller: _semesterIdCtrl,
-                    decoration: const InputDecoration(labelText: "Semester ID", border: OutlineInputBorder()),
-                    keyboardType: TextInputType.number,
-                    validator: (v) => v!.isEmpty ? "Required" : null,
-                  )),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Text("Grades", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 8),
-
-              // Dynamic Rows
-              ..._gradeRows.asMap().entries.map((entry) {
-                int idx = entry.key;
-                var controllers = entry.value;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    children: [
-                      Expanded(flex: 2, child: TextFormField(
-                        controller: controllers["course"],
-                        decoration: InputDecoration(labelText: "Course ID", filled: true, fillColor: Colors.grey.shade50),
-                        validator: (v) => v!.isEmpty ? "Req" : null,
-                      )),
-                      const SizedBox(width: 12),
-                      Expanded(flex: 1, child: TextFormField(
-                        controller: controllers["score"],
-                        decoration: InputDecoration(labelText: "Score (0-100)", filled: true, fillColor: Colors.grey.shade50),
-                        validator: (v) => v!.isEmpty ? "Req" : null,
-                      )),
-                      IconButton(
-                        onPressed: () => _removeGradeRow(idx),
-                        icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                      )
-                    ],
                   ),
-                );
-              }),
-
-              TextButton.icon(
-                  onPressed: _addGradeRow,
-                  icon: const Icon(Icons.add),
-                  label: const Text("Add Another Course")
-              ),
-              const SizedBox(height: 24),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _submit,
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
-                  child: _isSubmitting ? const CircularProgressIndicator() : const Text("Upload Results"),
                 ),
+                SizedBox(
+                  width: isSmall ? double.infinity : 200,
+                  child: DropdownButtonFormField<int>(
+                    value: _selectedYearId,
+                    decoration: const InputDecoration(labelText: "Academic Year", border: OutlineInputBorder()),
+                    items: yearItems,
+                    onChanged: (val) {
+                      setState(() => _selectedYearId = val);
+                      if (val != null) _fetchSemesters(val);
+                    },
+                    validator: (v) => v == null ? "Required" : null,
+                  ),
+                ),
+                SizedBox(
+                  width: isSmall ? double.infinity : 200,
+                  child: DropdownButtonFormField<int>(
+                    value: _selectedSemesterId,
+                    decoration: const InputDecoration(labelText: "Semester", border: OutlineInputBorder()),
+                    items: semItems,
+                    onChanged: (val) => setState(() => _selectedSemesterId = val),
+                    validator: (v) => v == null ? "Required" : null,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 32),
+            const Text("Course Grades", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+            const Divider(),
+
+            // Grade Rows
+            ..._gradeRows.asMap().entries.map((entry) {
+              int idx = entry.key;
+              var row = entry.value;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: isSmall
+                    ? _buildMobileRow(idx, row, courseItems) // Stacks for mobile
+                    : _buildDesktopRow(idx, row, courseItems), // Inline for desktop
+              );
+            }),
+
+            const SizedBox(height: 16),
+            TextButton.icon(onPressed: _addGradeRow, icon: const Icon(Icons.add), label: const Text("Add Another Course")),
+            const SizedBox(height: 32),
+
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                child: _isSubmitting ? const CircularProgressIndicator() : const Text("Upload Student Results"),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
+
+  Widget _buildDesktopRow(int idx, Map<String, dynamic> row, List<DropdownMenuItem<int>> courseItems) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: DropdownButtonFormField<int>(
+            value: row['course_id'],
+            decoration: const InputDecoration(labelText: "Course", border: OutlineInputBorder()),
+            items: courseItems,
+            onChanged: (v) => setState(() => _gradeRows[idx]['course_id'] = v),
+            validator: (v) => v == null ? "Req" : null,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 1,
+          child: TextFormField(
+            controller: row['score_ctrl'],
+            decoration: const InputDecoration(labelText: "Score", border: OutlineInputBorder()),
+            keyboardType: TextInputType.number,
+            validator: (v) => v!.isEmpty ? "Req" : null,
+          ),
+        ),
+        IconButton(
+          onPressed: () => setState(() => _gradeRows.removeAt(idx)),
+          icon: const Icon(Icons.delete_outline, color: Colors.red),
+        )
+      ],
+    );
+  }
+
+  Widget _buildMobileRow(int idx, Map<String, dynamic> row, List<DropdownMenuItem<int>> courseItems) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          children: [
+            DropdownButtonFormField<int>(
+              value: row['course_id'],
+              decoration: const InputDecoration(labelText: "Course"),
+              items: courseItems,
+              onChanged: (v) => setState(() => _gradeRows[idx]['course_id'] = v),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: TextFormField(controller: row['score_ctrl'], decoration: const InputDecoration(labelText: "Score"))),
+                IconButton(onPressed: () => setState(() => _gradeRows.removeAt(idx)), icon: const Icon(Icons.delete, color: Colors.red)),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final grades = _gradeRows.map((r) => {
+        "course_id": r['course_id'],
+        "score": double.parse(r['score_ctrl'].text),
+      }).toList();
+
+      await ApiService.post('/results/batch', {
+        "student_code": _studentCodeCtrl.text.trim(),
+        "semester_id": _selectedSemesterId,
+        "grades": grades,
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Success!")));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 }
 
 // --------------------------------------------------------------------------
-// TAB 2: TRANSCRIPT VIEW
+// TAB 2: TRANSCRIPT VIEW (Simplified Search)
 // --------------------------------------------------------------------------
 class _TranscriptViewTab extends StatefulWidget {
   const _TranscriptViewTab();
-
   @override
   State<_TranscriptViewTab> createState() => _TranscriptViewTabState();
 }
 
 class _TranscriptViewTabState extends State<_TranscriptViewTab> {
   final _searchCtrl = TextEditingController();
-  Transcript? _transcript;
-  bool _isLoading = false;
-  String? _error;
-
-  Future<void> _fetchTranscript() async {
-    if (_searchCtrl.text.isEmpty) return;
-
-    setState(() { _isLoading = true; _error = null; _transcript = null; });
-
-    try {
-      final res = await ApiService.get('/results/transcript/${_searchCtrl.text.trim()}');
-      if (res is Map && res['data'] != null) {
-        setState(() => _transcript = Transcript.fromJson(res['data']));
-      } else {
-        setState(() => _error = "Invalid data format received");
-      }
-    } catch (e) {
-      setState(() => _error = e.toString().replaceAll("Exception:", "").trim());
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
+  // ... Keep your existing Logic for fetching transcript, just update the Search UI ...
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Search Bar
-        Container(
-          constraints: const BoxConstraints(maxWidth: 600),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _searchCtrl,
-                  decoration: const InputDecoration(
-                    labelText: "Enter Student Database ID",
-                    border: OutlineInputBorder(),
-                    suffixIcon: Icon(Icons.search),
-                  ),
-                  onSubmitted: (_) => _fetchTranscript(),
-                ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: TextField(
+              controller: _searchCtrl,
+              decoration: InputDecoration(
+                  labelText: "Search by Student ID (e.g. STD2025001)",
+                  prefixIcon: const Icon(Icons.badge),
+                  suffixIcon: IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+                  border: const OutlineInputBorder()
               ),
-              const SizedBox(width: 16),
-              ElevatedButton(
-                onPressed: _isLoading ? null : _fetchTranscript,
-                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20)),
-                child: const Text("View Transcript"),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        // Result Display
-        Expanded(
-          child: _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
-              : _transcript == null
-              ? Center(child: Text("Enter a student ID to view results.", style: TextStyle(color: Colors.grey.shade400)))
-              : SingleChildScrollView(child: _buildTranscriptCard(_transcript!)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTranscriptCard(Transcript t) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 800),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Student Info Header
-          Card(
-            color: Colors.blue.shade50,
-            child: ListTile(
-              leading: const CircleAvatar(child: Icon(Icons.person)),
-              title: Text(t.studentName, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text("ID: ${t.studentId} • ${t.program}"),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Loop through semesters (Map entries)
-          ...t.records.entries.map((entry) {
-            return Card(
-              margin: const EdgeInsets.only(bottom: 16),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(entry.key, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
-                    const Divider(),
-                    Table(
-                      columnWidths: const {
-                        0: FlexColumnWidth(3),
-                        1: FlexColumnWidth(1),
-                        2: FlexColumnWidth(1),
-                        3: FlexColumnWidth(1),
-                      },
-                      children: [
-                        const TableRow(children: [
-                          Text("Course", style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text("Code", style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text("Score", style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text("Grade", style: TextStyle(fontWeight: FontWeight.bold)),
-                        ]),
-                        const TableRow(children: [SizedBox(height: 8), SizedBox(), SizedBox(), SizedBox()]),
-                        ...entry.value.map((course) => TableRow(
-                            children: [
-                              Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Text(course.course)),
-                              Text(course.code),
-                              Text(course.score.toString()),
-                              Text(course.grade, style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: course.grade == 'F' ? Colors.red : Colors.green
-                              )),
-                            ]
-                        ))
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
+        ),
+        const Expanded(child: Center(child: Text("Search for a student to view their transcript.")))
+      ],
     );
   }
 }

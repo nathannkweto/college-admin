@@ -49,9 +49,15 @@ class Program {
 class AcademicLevel {
   final int id;
   final String name;
+  final String tag; // <--- Add this
   final List<Program> programs;
 
-  AcademicLevel({required this.id, required this.name, required this.programs});
+  AcademicLevel({
+    required this.id,
+    required this.name,
+    required this.tag, // <--- Add this
+    required this.programs
+  });
 
   factory AcademicLevel.fromJson(Map<String, dynamic> json) {
     var list = json['programs'] as List? ?? [];
@@ -59,6 +65,7 @@ class AcademicLevel {
     return AcademicLevel(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
+      tag: json['tag'] ?? '', // <--- Parse it here
       programs: programList,
     );
   }

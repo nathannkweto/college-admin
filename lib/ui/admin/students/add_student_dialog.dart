@@ -11,19 +11,30 @@ class AddStudentDialog extends StatefulWidget {
 class _AddStudentDialogState extends State<AddStudentDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers
+  // Text Controllers
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _nationalIdController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _programIdController = TextEditingController();
-  final _studyLevelIdController = TextEditingController();
+
+  // Dropdown State
+  List<dynamic> _levels = [];
+  List<dynamic> _filteredPrograms = [];
+
+  int? _selectedLevelId;
+  int? _selectedProgramId;
 
   DateTime _enrollmentDate = DateTime.now();
-
-  bool _isSubmitting = false;
+  bool _isLoadingData = true; // For fetching levels
+  bool _isSubmitting = false; // For submitting form
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLevels();
+  }
 
   @override
   void dispose() {
@@ -32,9 +43,46 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
     _emailController.dispose();
     _nationalIdController.dispose();
     _phoneController.dispose();
-    _programIdController.dispose();
-    _studyLevelIdController.dispose();
     super.dispose();
+  }
+
+  // Fetch Levels and their nested Programs
+  Future<void> _fetchLevels() async {
+    try {
+      final response = await ApiService.get('/curriculum/levels');
+      if (mounted) {
+        setState(() {
+          _levels = response['data'] ?? [];
+          _isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = "Failed to load academic data: $e";
+          _isLoadingData = false;
+        });
+      }
+    }
+  }
+
+  // Handle Level Change -> Update Programs List
+  void _onLevelChanged(int? levelId) {
+    if (levelId == null) return;
+
+    setState(() {
+      _selectedLevelId = levelId;
+      _selectedProgramId = null; // Reset program when level changes
+
+      // Find the selected level object to get its programs
+      // Assumes structure: {id: 1, name: "...", programs: [...]}
+      final selectedLevel = _levels.firstWhere(
+              (lvl) => lvl['id'] == levelId,
+          orElse: () => {}
+      );
+
+      _filteredPrograms = selectedLevel['programs'] ?? [];
+    });
   }
 
   Future<void> _pickDate() async {
@@ -52,13 +100,18 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Manual validation for dropdowns
+    if (_selectedLevelId == null || _selectedProgramId == null) {
+      setState(() => _error = "Please select both a Study Level and a Program.");
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
       _error = null;
     });
 
     try {
-      // Format date as YYYY-MM-DD
       final dateString = _enrollmentDate.toIso8601String().split('T')[0];
 
       final payload = {
@@ -67,15 +120,16 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
         "email": _emailController.text.trim(),
         "national_id": _nationalIdController.text.trim(),
         "phone": _phoneController.text.trim(),
-        "program_id": int.parse(_programIdController.text.trim()),
-        "study_level_id": int.parse(_studyLevelIdController.text.trim()),
+        "study_level_id": _selectedLevelId, // Send int directly
+        "program_id": _selectedProgramId,   // Send int directly
         "enrollment_date": dateString,
       };
 
+      // NOTE: Ensure this endpoint matches your Blueprint prefix (e.g. /people/students)
       await ApiService.post('/students', payload);
 
       if (mounted) {
-        Navigator.pop(context, true); // Return true to trigger refresh
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
@@ -89,17 +143,26 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // Helper for input decoration
     InputDecoration decoration(String label) => InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     );
 
+    // Loading State
+    if (_isLoadingData) {
+      return const AlertDialog(
+        content: SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator())
+        ),
+      );
+    }
+
     return AlertDialog(
       title: const Text("Register New Student"),
       content: SizedBox(
-        width: 500, // Wider dialog for more fields
+        width: 500,
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -138,7 +201,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Row 2: Contact
+                // Row 2: Email
                 TextFormField(
                   controller: _emailController,
                   decoration: decoration("Email Address"),
@@ -170,34 +233,46 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
 
                 const Divider(),
                 const SizedBox(height: 8),
-                const Text("Academic Details", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                const Text("Academic Placement", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
                 const SizedBox(height: 16),
 
-                // Row 4: IDs
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _programIdController,
-                        decoration: decoration("Program ID"),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => int.tryParse(v ?? "") == null ? "Number required" : null,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _studyLevelIdController,
-                        decoration: decoration("Study Level ID"),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => int.tryParse(v ?? "") == null ? "Number required" : null,
-                      ),
-                    ),
-                  ],
+                // --- CHANGED: LEVEL DROPDOWN ---
+                DropdownButtonFormField<int>(
+                  value: _selectedLevelId,
+                  decoration: decoration("Study Level"),
+                  items: _levels.map<DropdownMenuItem<int>>((level) {
+                    return DropdownMenuItem<int>(
+                      value: level['id'],
+                      // Displays: "Bachelor (BSC)"
+                      child: Text("${level['name']} (${level['tag'] ?? ''})"),
+                    );
+                  }).toList(),
+                  onChanged: _onLevelChanged,
+                  validator: (v) => v == null ? "Required" : null,
                 ),
                 const SizedBox(height: 16),
 
-                // Row 5: Date
+                // --- CHANGED: PROGRAM DROPDOWN ---
+                DropdownButtonFormField<int>(
+                  value: _selectedProgramId,
+                  decoration: decoration("Program"),
+                  // Disable dropdown if no level is selected
+                  onChanged: _selectedLevelId == null ? null : (val) {
+                    setState(() => _selectedProgramId = val);
+                  },
+                  validator: (v) => v == null ? "Required" : null,
+                  // Show "Select Level First" if empty
+                  hint: Text(_selectedLevelId == null ? "Select Level First" : "Select Program"),
+                  items: _filteredPrograms.map<DropdownMenuItem<int>>((prog) {
+                    return DropdownMenuItem<int>(
+                      value: prog['id'],
+                      child: Text(prog['name']),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                // Date
                 InkWell(
                   onTap: _pickDate,
                   child: InputDecorator(

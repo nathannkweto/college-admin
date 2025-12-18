@@ -16,12 +16,21 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _departmentIdController = TextEditingController();
 
-  DateTime? _employmentDate = DateTime.now(); // Nullable for safety
+  // Data State
+  List<dynamic> _departments = [];
+  int? _selectedDepartmentId;
+  DateTime _employmentDate = DateTime.now();
 
+  bool _isLoadingData = true;
   bool _isSubmitting = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDepartments();
+  }
 
   @override
   void dispose() {
@@ -29,14 +38,34 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
     _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-    _departmentIdController.dispose();
     super.dispose();
+  }
+
+  // Fetch departments for the dropdown
+  Future<void> _fetchDepartments() async {
+    try {
+      // Adjust this endpoint if your backend uses a different path
+      final response = await ApiService.get('/curriculum/departments');
+      if (mounted) {
+        setState(() {
+          _departments = List<dynamic>.from(response['data'] ?? []);
+          _isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = "Failed to load departments: $e";
+          _isLoadingData = false;
+        });
+      }
+    }
   }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _employmentDate ?? DateTime.now(),
+      initialDate: _employmentDate,
       firstDate: DateTime(1980),
       lastDate: DateTime(2100),
     );
@@ -47,8 +76,8 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_employmentDate == null) {
-      setState(() => _error = "Employment date is required");
+    if (_selectedDepartmentId == null) {
+      setState(() => _error = "Please select a department");
       return;
     }
 
@@ -58,21 +87,18 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
     });
 
     try {
-      final dateString = _employmentDate!.toIso8601String().split('T')[0];
+      final dateString = _employmentDate.toIso8601String().split('T')[0];
 
-      // POST request based on LecturerRegistration schema
-      await ApiService.post('/lecturers', {
+      await ApiService.post('/people/lecturers', {
         "first_name": _firstNameController.text.trim(),
         "last_name": _lastNameController.text.trim(),
         "email": _emailController.text.trim(),
         "phone": _phoneController.text.trim(),
-        "department_id": int.parse(_departmentIdController.text.trim()),
+        "department_id": _selectedDepartmentId,
         "employment_date": dateString,
       });
 
-      if (mounted) {
-        Navigator.pop(context, true); // Success
-      }
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -85,11 +111,28 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    // PRE-COMPUTE dropdown items to prevent JS map errors on Web
+    final List<DropdownMenuItem<int>> departmentItems = _departments.map((dept) {
+      return DropdownMenuItem<int>(
+        value: dept['id'] as int,
+        child: Text(dept['name']?.toString() ?? "Unnamed Dept"),
+      );
+    }).toList();
+
     InputDecoration decoration(String label) => InputDecoration(
       labelText: label,
       border: const OutlineInputBorder(),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     );
+
+    if (_isLoadingData) {
+      return const AlertDialog(
+        content: SizedBox(
+          height: 100,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
 
     return AlertDialog(
       title: const Text("Register New Lecturer"),
@@ -100,7 +143,6 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (_error != null)
                   Container(
@@ -111,71 +153,49 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
                     child: Text(_error!, style: TextStyle(color: Colors.red.shade800)),
                   ),
 
-                // Name Row
+                // Name Fields
                 Row(
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _firstNameController,
-                        decoration: decoration("First Name"),
-                        validator: (v) => v!.isEmpty ? "Required" : null,
-                      ),
-                    ),
+                    Expanded(child: TextFormField(controller: _firstNameController, decoration: decoration("First Name"), validator: (v) => v!.isEmpty ? "Required" : null)),
                     const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _lastNameController,
-                        decoration: decoration("Last Name"),
-                        validator: (v) => v!.isEmpty ? "Required" : null,
-                      ),
-                    ),
+                    Expanded(child: TextFormField(controller: _lastNameController, decoration: decoration("Last Name"), validator: (v) => v!.isEmpty ? "Required" : null)),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Contact Row
-                TextFormField(
-                  controller: _emailController,
-                  decoration: decoration("Email"),
-                  validator: (v) => v!.contains("@") ? null : "Invalid email",
+                // Contact Fields
+                TextFormField(controller: _emailController, decoration: decoration("Email"), validator: (v) => v!.contains("@") ? null : "Invalid email"),
+                const SizedBox(height: 16),
+                TextFormField(controller: _phoneController, decoration: decoration("Phone Number"), validator: (v) => v!.isEmpty ? "Required" : null),
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Divider(),
+                ),
+
+                // --- DEPARTMENT DROPDOWN ---
+                DropdownButtonFormField<int>(
+                  value: _selectedDepartmentId,
+                  decoration: decoration("Department"),
+                  items: departmentItems,
+                  onChanged: (val) => setState(() => _selectedDepartmentId = val),
+                  validator: (v) => v == null ? "Required" : null,
                 ),
                 const SizedBox(height: 16),
 
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: decoration("Phone Number"),
-                  validator: (v) => v!.isEmpty ? "Required" : null,
-                ),
-                const SizedBox(height: 16),
-
-                // Professional Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _departmentIdController,
-                        decoration: decoration("Department ID"),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => int.tryParse(v ?? "") == null ? "Number required" : null,
-                      ),
+                // Employment Date
+                InkWell(
+                  onTap: _pickDate,
+                  child: InputDecorator(
+                    decoration: decoration("Employment Date"),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_employmentDate.toIso8601String().split('T')[0]),
+                        const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: _pickDate,
-                        child: InputDecorator(
-                          decoration: decoration("Employment Date"),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(_employmentDate?.toIso8601String().split('T')[0] ?? "Select Date"),
-                              const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -183,10 +203,7 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submit,
           child: _isSubmitting
