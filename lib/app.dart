@@ -1,3 +1,4 @@
+import 'package:college_admin/ui/student/student_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
@@ -50,7 +51,7 @@ class AuthWrapper extends StatelessWidget {
         } else if (user?.role == UserRole.lecturer) {
           return const Scaffold(body: Center(child: Text("Lecturer Portal (Coming Soon)")));
         } else {
-          return const Scaffold(body: Center(child: Text("Student Portal (Coming Soon)")));
+          return const StudentLayout();
         }
       },
     );
