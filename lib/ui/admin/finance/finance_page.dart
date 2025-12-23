@@ -29,8 +29,8 @@ class _FinancePageState extends State<FinancePage> {
   Future<void> _fetchTransactions() async {
     setState(() => _isLoading = true);
     try {
-      // Build query: /finance/transactions OR /finance/transactions?type=income
-      String endpoint = '/finance/transactions';
+      // Build query: /fees/transactions OR /fees/transactions?type=income
+      String endpoint = '/fees/transactions';
       if (_filterType != null) endpoint += '?type=$_filterType';
 
       final res = await ApiService.get(endpoint);

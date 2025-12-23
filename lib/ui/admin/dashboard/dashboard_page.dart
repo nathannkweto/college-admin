@@ -34,7 +34,7 @@ class _DashboardPageState extends State<DashboardPage> {
       }
 
       // Fetch Finance
-      final financeRes = await ApiService.get('/dashboard/finance');
+      final financeRes = await ApiService.get('/dashboard/fees');
       if (financeRes is Map && financeRes['data'] != null) {
         _finance = FinanceSummary.fromJson(financeRes['data']);
       }
