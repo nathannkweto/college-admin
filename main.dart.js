@@ -43108,7 +43108,7 @@ f=i.h(0,"levels")
 if(f==null)f=0
 i=i.h(0,"programs")
 n.e=new A.KS(h,g,f,i==null?0:i)}s=7
-return A.J(A.eE("/dashboard/finance"),$async$q8)
+return A.J(A.eE("/dashboard/fees"),$async$q8)
 case 7:l=b
 if(j.b(l)&&J.cr(l,"data")!=null){j=J.cr(l,"data")
 i=j.h(0,"income")
@@ -43171,7 +43171,7 @@ s=p}for(;;)switch(s){case 0:if(!n.d.gM().hu()){s=1
 break}n.O(new A.aso(n))
 p=4
 s=7
-return A.J(A.hq("/finance/transactions",A.ae(["title",B.c.cA(n.e.a.a),"type",n.w,"amount",A.ay6(B.c.cA(n.f.a.a)),"note",B.c.cA(n.r.a.a)],t.N,t.z)),$async$lt)
+return A.J(A.hq("/fees/transactions",A.ae(["title",B.c.cA(n.e.a.a),"type",n.w,"amount",A.ay6(B.c.cA(n.f.a.a)),"note",B.c.cA(n.r.a.a)],t.N,t.z)),$async$lt)
 case 7:l=n.c
 if(l!=null)A.d1(l,!1).dQ(!0)
 p=2
@@ -43226,7 +43226,7 @@ s=p}for(;;)switch(s){case 0:if(!n.d.gM().hu()){s=1
 break}n.O(new A.arJ(n))
 p=4
 s=7
-return A.J(A.hq("/finance/fees/pay",A.ae(["student_id",B.c.cA(n.e.a.a),"amount",A.ay6(B.c.cA(n.f.a.a))],t.N,t.z)),$async$lt)
+return A.J(A.hq("/fees/fees/pay",A.ae(["student_id",B.c.cA(n.e.a.a),"amount",A.ay6(B.c.cA(n.f.a.a))],t.N,t.z)),$async$lt)
 case 7:l=n.c
 if(l!=null){l.a6(t.Pu).f.nO(B.TV)
 l=n.c
@@ -43278,7 +43278,7 @@ var $async$my=A.O(function(a,b){if(a===1){p.push(b)
 s=q}for(;;)switch(s){case 0:n.O(new A.aoY(n))
 q=3
 j={}
-m="/finance/transactions"
+m="/fees/transactions"
 i=n.f
 if(i!=null)m=J.aCK(m,"?type="+i)
 s=6
@@ -43812,7 +43812,7 @@ k=A.X(l).i("a_<1,aU<q,@>>")
 j=A.Y(new A.a_(l,new A.awh(),k),k.i("ac.E"))
 m=j
 s=7
-return A.J(A.hq("/results/batch",A.ae(["student_code",B.c.cA(n.e.a.a),"semester_id",n.y,"grades",m],t.N,t.z)),$async$z8)
+return A.J(A.hq("/exams/batch",A.ae(["student_code",B.c.cA(n.e.a.a),"semester_id",n.y,"grades",m],t.N,t.z)),$async$z8)
 case 7:l=n.c
 if(l!=null){l.a6(t.Pu).f.nO(B.TW)
 l=n.c
