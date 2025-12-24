@@ -45,7 +45,7 @@ class _AddLecturerDialogState extends State<AddLecturerDialog> {
   Future<void> _fetchDepartments() async {
     try {
       // Adjust this endpoint if your backend uses a different path
-      final response = await ApiService.get('/curriculum/departments');
+      final response = await ApiService.get('/courses/departments');
       if (mounted) {
         setState(() {
           _departments = List<dynamic>.from(response['data'] ?? []);

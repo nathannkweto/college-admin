@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Add 'intl' to pubspec.yaml if needed
+import 'package:intl/intl.dart';
 import '../../../services/api_service.dart';
 import '../../../models/finance_models.dart';
 import 'finance_dialogs.dart';
@@ -70,10 +70,14 @@ class _FinancePageState extends State<FinancePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HEADER & ACTIONS ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // --- FIXED HEADER (Responsive Wrap) ---
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 16, // Horizontal gap
+              runSpacing: 16, // Vertical gap (when wrapped)
               children: [
+                // Title Section
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -82,7 +86,11 @@ class _FinancePageState extends State<FinancePage> {
                     Text("Track revenue and expenses", style: TextStyle(color: Colors.grey)),
                   ],
                 ),
-                Row(
+
+                // Buttons Section (Also Wrapped)
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
                     ElevatedButton.icon(
                       onPressed: () => _openDialog(const PayFeesDialog()),
@@ -94,7 +102,6 @@ class _FinancePageState extends State<FinancePage> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                       ),
                     ),
-                    const SizedBox(width: 12),
                     ElevatedButton.icon(
                       onPressed: () => _openDialog(const RecordTransactionDialog()),
                       icon: const Icon(Icons.receipt_long),
@@ -110,22 +117,22 @@ class _FinancePageState extends State<FinancePage> {
             const SizedBox(height: 32),
 
             // --- FILTERS ---
-            Row(
+            Wrap( // Used Wrap here just in case filters overflow too
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Text("Filter: ", style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(width: 8),
                 ChoiceChip(
                   label: const Text("All"),
                   selected: _filterType == null,
                   onSelected: (b) { if(b) setState(() { _filterType = null; _fetchTransactions(); }); },
                 ),
-                const SizedBox(width: 8),
                 ChoiceChip(
                   label: const Text("Income", style: TextStyle(color: Colors.green)),
                   selected: _filterType == 'income',
                   onSelected: (b) { if(b) setState(() { _filterType = 'income'; _fetchTransactions(); }); },
                 ),
-                const SizedBox(width: 8),
                 ChoiceChip(
                   label: const Text("Expenses", style: TextStyle(color: Colors.red)),
                   selected: _filterType == 'expense',
@@ -135,7 +142,7 @@ class _FinancePageState extends State<FinancePage> {
             ),
             const SizedBox(height: 16),
 
-            // --- DATA TABLE ---
+            // --- DATA TABLE (With Horizontal Scroll) ---
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -149,42 +156,46 @@ class _FinancePageState extends State<FinancePage> {
                     : _transactions.isEmpty
                     ? const Center(child: Text("No transactions found.", style: TextStyle(color: Colors.grey)))
                     : SingleChildScrollView(
-                  child: DataTable(
-                    headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
-                    columns: const [
-                      DataColumn(label: Text("Date")),
-                      DataColumn(label: Text("Description")),
-                      DataColumn(label: Text("Type")),
-                      DataColumn(label: Text("Amount", textAlign: TextAlign.right)),
-                    ],
-                    rows: _transactions.map((t) {
-                      return DataRow(cells: [
-                        DataCell(Text(dateFmt.format(t.date))),
-                        DataCell(Text(t.title, style: const TextStyle(fontWeight: FontWeight.w500))),
-                        DataCell(Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: t.isIncome ? Colors.green.shade50 : Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            t.type.toUpperCase(),
+                  scrollDirection: Axis.vertical,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal, // ADDED: Prevents horizontal overflow
+                    child: DataTable(
+                      headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
+                      columns: const [
+                        DataColumn(label: Text("Date")),
+                        DataColumn(label: Text("Description")),
+                        DataColumn(label: Text("Type")),
+                        DataColumn(label: Text("Amount", textAlign: TextAlign.right)),
+                      ],
+                      rows: _transactions.map((t) {
+                        return DataRow(cells: [
+                          DataCell(Text(dateFmt.format(t.date))),
+                          DataCell(Text(t.title, style: const TextStyle(fontWeight: FontWeight.w500))),
+                          DataCell(Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: t.isIncome ? Colors.green.shade50 : Colors.red.shade50,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              t.type.toUpperCase(),
+                              style: TextStyle(
+                                color: t.isIncome ? Colors.green.shade800 : Colors.red.shade800,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )),
+                          DataCell(Text(
+                            "${t.isIncome ? '+' : '-'} ${currencyFmt.format(t.amount)}",
                             style: TextStyle(
-                              color: t.isIncome ? Colors.green.shade800 : Colors.red.shade800,
-                              fontSize: 12,
+                              color: t.isIncome ? Colors.green : Colors.red,
                               fontWeight: FontWeight.bold,
                             ),
-                          ),
-                        )),
-                        DataCell(Text(
-                          "${t.isIncome ? '+' : '-'} ${currencyFmt.format(t.amount)}",
-                          style: TextStyle(
-                            color: t.isIncome ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        )),
-                      ]);
-                    }).toList(),
+                          )),
+                        ]);
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),

@@ -13,8 +13,8 @@ class StudentBranding extends StatelessWidget {
     final theme = Theme.of(context);
 
     // --- FIX: Dynamic Padding ---
-    // We remove horizontal padding when collapsed to give the icon room to breathe.
-    // 80px (Drawer) - 0px (Padding) = 80px available for the 40px icon.
+    // We remove horizontal padding when collapsed to give the icons room to breathe.
+    // 80px (Drawer) - 0px (Padding) = 80px available for the 40px icons.
     final EdgeInsets padding = isCollapsed
         ? const EdgeInsets.symmetric(vertical: 24)
         : const EdgeInsets.symmetric(vertical: 24, horizontal: 24);
@@ -24,7 +24,7 @@ class StudentBranding extends StatelessWidget {
       padding: padding,
       child: isCollapsed
           ? Center(
-        // Center ensures the icon is perfectly aligned in the 80px width
+        // Center ensures the icons is perfectly aligned in the 80px width
         child: _LogoIcon(),
       )
           : SingleChildScrollView(
@@ -70,15 +70,10 @@ class StudentBranding extends StatelessWidget {
 class _LogoIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      // Fixed dimensions ensure the blue box doesn't "squish" during animation
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.blue.shade600,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Icon(Icons.school, color: Colors.white, size: 24),
+    return Image.asset(
+      'assets/icons/logo.jpg',
+      height: 50,
+      fit: BoxFit.contain,
     );
   }
 }

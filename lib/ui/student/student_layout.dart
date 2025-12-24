@@ -2,7 +2,7 @@ import 'package:college_admin/ui/admin/results/results_page.dart';
 import 'package:flutter/material.dart';
 import 'layout/student_drawer.dart';
 import 'dashboard/dashboard_page.dart';
-import 'curriculum/curriculum_page.dart';
+import 'curriculum/student_curriculum_page.dart';
 import 'fees/fees_page.dart';
 import 'exams/student_exams_page.dart';
 
@@ -30,19 +30,19 @@ class _StudentLayoutState extends State<StudentLayout> {
     Widget content;
     switch (_selectedIndex) {
       case 0:
-        content = const DashboardPage();
+        content = const StudentDashboard();
         break;
       case 1:
         content = const StudentExamsPage();
         break;
       case 2:
-        content = const CurriculumPage();
+        content = const StudentCurriculumPage();
         break;
       case 3:
         content = const FeesPage();
         break;
       default:
-        content = const DashboardPage();
+        content = const StudentDashboard();
     }
 
     // 3. Define the Navigation Sidebar

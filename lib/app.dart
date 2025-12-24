@@ -5,6 +5,7 @@ import 'providers/auth_provider.dart';
 import 'models/enums.dart';
 import 'ui/auth/login_page.dart';
 import 'ui/admin/admin_layout.dart';
+import 'ui/lecturer/lecturer_layout.dart';
 
 class CollegeApp extends StatelessWidget {
   // FIX: Ensure this constructor is 'const'
@@ -49,7 +50,7 @@ class AuthWrapper extends StatelessWidget {
         if (user?.role == UserRole.admin) {
           return const AdminLayout();
         } else if (user?.role == UserRole.lecturer) {
-          return const Scaffold(body: Center(child: Text("Lecturer Portal (Coming Soon)")));
+          return const LecturerLayout();
         } else {
           return const StudentLayout();
         }

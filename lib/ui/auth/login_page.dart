@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -52,7 +53,10 @@ class _LoginPageState extends State<LoginPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.school, size: 64, color: Colors.blue),
+                  Image.asset(
+                    '../../../assets/icons/logo.jpg',
+                    height: 150,
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     "MATEM College",
@@ -109,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: isLoading ? null : _handleLogin,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: Colors.blue,
+                      backgroundColor: Color.fromARGB(255, 2, 52, 108),
                       foregroundColor: Colors.white,
                     ),
                     child: isLoading

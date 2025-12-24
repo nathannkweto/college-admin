@@ -55,10 +55,10 @@ class StudentDrawer extends StatelessWidget {
               // This prevents horizontal overflow during the width animation
               physics: const ClampingScrollPhysics(),
               children: [
-                _buildNavItem(context, 0, "Dashboard", Icons.dashboard, isMobile),
-                _buildNavItem(context, 1, "Exams", Icons.people, isMobile),
-                _buildNavItem(context, 2, "Curriculum", Icons.co_present, isMobile),
-                _buildNavItem(context, 3, "Fees", Icons.category, isMobile),
+                _buildNavItem(context, 0, "Home", Icons.home, isMobile),
+                _buildNavItem(context, 1, "Exams", Icons.school_outlined, isMobile),
+                _buildNavItem(context, 2, "Curriculum", Icons.chrome_reader_mode_outlined, isMobile),
+                _buildNavItem(context, 3, "Fees", Icons.account_balance_wallet_outlined, isMobile),
               ],
             ),
           ),
@@ -80,7 +80,7 @@ class StudentDrawer extends StatelessWidget {
       bool isMobile,
       ) {
     final isSelected = selectedIndex == index;
-    final color = isSelected ? Colors.blue : Colors.grey.shade700;
+    final color = isSelected ? Colors.green : Colors.grey.shade700;
     final bool showFullMenu = isMobile || !isCollapsed;
 
     return InkWell(
@@ -89,7 +89,7 @@ class StudentDrawer extends StatelessWidget {
         height: 48,
         margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.shade50 : Colors.transparent,
+          color: isSelected ? Colors.green.shade50 : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(

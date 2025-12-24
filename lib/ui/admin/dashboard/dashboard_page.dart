@@ -12,8 +12,6 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool _isLoading = true;
-
-  // Data State
   DashboardMetrics? _metrics;
   FinanceSummary? _finance;
   String? _error;
@@ -27,14 +25,12 @@ class _DashboardPageState extends State<DashboardPage> {
   Future<void> _loadDashboardData() async {
     setState(() { _isLoading = true; _error = null; });
     try {
-      // Fetch Metrics
       final metricsRes = await ApiService.get('/dashboard/metrics');
       if (metricsRes is Map && metricsRes['data'] != null) {
         _metrics = DashboardMetrics.fromJson(metricsRes['data']);
       }
 
-      // Fetch Finance
-      final financeRes = await ApiService.get('/dashboard/fees');
+      final financeRes = await ApiService.get('/dashboard/finance');
       if (financeRes is Map && financeRes['data'] != null) {
         _finance = FinanceSummary.fromJson(financeRes['data']);
       }
@@ -48,9 +44,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     if (_error != null) {
       return Center(
@@ -59,7 +53,7 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
-            Text("Error loading dashboard: $_error"),
+            Text("Error: $_error"),
             const SizedBox(height: 16),
             ElevatedButton(onPressed: _loadDashboardData, child: const Text("Retry")),
           ],
@@ -67,67 +61,75 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
-    // Default to 0 if null
     final m = _metrics ?? DashboardMetrics(students: 0, lecturers: 0, levels: 0, programs: 0);
     final f = _finance ?? FinanceSummary(income: 0, expenses: 0, netBalance: 0);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          const Text("Dashboard Overview", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text("Welcome back, Admin", style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 32),
-
-          // --- ROW 1: KEY METRICS ---
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _DashboardCard(
-                title: "Total Students",
-                value: m.students.toString(),
-                icon: Icons.people_alt,
-                color: Colors.blue,
-              ),
-              const SizedBox(width: 24),
-              _DashboardCard(
-                title: "Lecturers",
-                value: m.lecturers.toString(),
-                icon: Icons.co_present,
-                color: Colors.orange,
-              ),
-              const SizedBox(width: 24),
-              _DashboardCard(
-                title: "Active Programs",
-                value: m.programs.toString(),
-                icon: Icons.school,
-                color: Colors.purple,
-              ),
-              const SizedBox(width: 24),
-              _DashboardCard(
-                title: "Academic Levels",
-                value: m.levels.toString(),
-                icon: Icons.layers,
-                color: Colors.teal,
-              ),
+              const Text("Dashboard Overview", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              const Text("Welcome back, Admin", style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 32),
+
+              // --- RESPONSIVE METRIC CARDS ---
+              _buildResponsiveGrid(constraints.maxWidth, m),
+
+              const SizedBox(height: 32),
+
+              // --- RESPONSIVE FINANCE CARD ---
+              const Text("Financial Health", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              _FinanceOverviewCard(finance: f),
             ],
           ),
-          const SizedBox(height: 32),
+        );
+      },
+    );
+  }
 
-          // --- ROW 2: FINANCIAL HEALTH ---
-          const Text("Financial Health", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          _FinanceOverviewCard(finance: f),
-        ],
-      ),
+  // Helper to arrange cards based on screen width
+  Widget _buildResponsiveGrid(double width, DashboardMetrics m) {
+    // Define cards data
+    final cards = [
+      _DashboardCard(title: "Total Students", value: m.students.toString(), icon: Icons.people_alt, color: Colors.blue),
+      _DashboardCard(title: "Lecturers", value: m.lecturers.toString(), icon: Icons.co_present, color: Colors.orange),
+      _DashboardCard(title: "Active Programs", value: m.programs.toString(), icon: Icons.school, color: Colors.purple),
+      _DashboardCard(title: "Academic Levels", value: m.levels.toString(), icon: Icons.layers, color: Colors.teal),
+    ];
+
+    // 1. Desktop (Wide): 4 cards in a Row
+    if (width > 1100) {
+      return Row(
+        children: cards.map((c) => Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: c))).toList(),
+      );
+    }
+
+    // 2. Tablet (Medium): 2 cards per row
+    if (width > 700) {
+      return Wrap(
+        spacing: 16,
+        runSpacing: 16,
+        children: cards.map((c) => SizedBox(
+            width: (width - 48 - 16) / 2, // (TotalWidth - Padding - Spacing) / 2
+            child: c
+        )).toList(),
+      );
+    }
+
+    // 3. Mobile (Narrow): 1 card per row
+    return Column(
+      children: cards.map((c) => Padding(padding: const EdgeInsets.only(bottom: 16), child: c)).toList(),
     );
   }
 }
 
 // ----------------------------------------------------------------------
-// WIDGET: Standard KPI Card
+// WIDGET: Standard KPI Card (Removed "Expanded" to make it reusable)
 // ----------------------------------------------------------------------
 class _DashboardCard extends StatelessWidget {
   final String title;
@@ -144,44 +146,42 @@ class _DashboardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
-          ],
-          border: Border.all(color: Colors.grey.shade100),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Icon(icon, color: color, size: 24),
-                ),
-                // Optional: trend indicator could go here
-              ],
-            ),
-            const SizedBox(height: 24),
-            Text(value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
-          ],
-        ),
+    // Removed "Expanded" here so we can control width from the parent
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.grey.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+        ],
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                child: Icon(icon, color: color, size: 24),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+        ],
       ),
     );
   }
 }
 
 // ----------------------------------------------------------------------
-// WIDGET: Financial Summary Card
+// WIDGET: Financial Summary Card (Responsive Update)
 // ----------------------------------------------------------------------
 class _FinanceOverviewCard extends StatelessWidget {
   final FinanceSummary finance;
@@ -199,54 +199,100 @@ class _FinanceOverviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.grey.shade200),
       ),
-      child: Row(
-        children: [
-          // Net Balance (Left Side)
-          Expanded(
-            flex: 2,
-            child: Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Breakpoint: If width < 600, stack them vertically
+          bool isNarrow = constraints.maxWidth < 600;
+
+          if (isNarrow) {
+            // --- MOBILE LAYOUT (Column) ---
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Net Balance", style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 8),
-                Text(
-                  currency.format(finance.netBalance),
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: finance.netBalance >= 0 ? Colors.black : Colors.red,
+                _buildNetBalance(currency),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Divider(),
+                ),
+                // In a Column, we don't need Flexible/Expanded for the row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(child: _statItem("Total Income", finance.income, Colors.green, Icons.arrow_upward)),
+                    const SizedBox(width: 16),
+                    Expanded(child: _statItem("Total Expenses", finance.expenses, Colors.red, Icons.arrow_downward)),
+                  ],
+                ),
+              ],
+            );
+          } else {
+            // --- DESKTOP/TABLET LAYOUT (Row) ---
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Net Balance takes natural width or fixed portion
+                SizedBox(
+                  width: 200,
+                  child: _buildNetBalance(currency),
+                ),
+
+                // Vertical Divider
+                Container(
+                  width: 1,
+                  height: 80,
+                  color: Colors.grey.shade200,
+                  margin: const EdgeInsets.symmetric(horizontal: 32),
+                ),
+
+                // 2. Income vs Expenses takes remaining space
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      // Using Expanded ensures they split the remaining width equally
+                      Expanded(child: _statItem("Total Income", finance.income, Colors.green, Icons.arrow_upward)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _statItem("Total Expenses", finance.expenses, Colors.red, Icons.arrow_downward)),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text("Active Semester", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
-                )
               ],
-            ),
-          ),
-          Container(width: 1, height: 80, color: Colors.grey.shade200),
-
-          // Income vs Expenses (Right Side)
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 32),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _statItem("Total Income", finance.income, Colors.green, Icons.arrow_upward),
-                  _statItem("Total Expenses", finance.expenses, Colors.red, Icons.arrow_downward),
-                ],
-              ),
-            ),
-          ),
-        ],
+            );
+          }
+        },
       ),
+    );
+  }
+
+  // Helper widget to avoid code duplication
+  Widget _buildNetBalance(NumberFormat currency) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Net Balance", style: TextStyle(color: Colors.grey)),
+        const SizedBox(height: 8),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            currency.format(finance.netBalance),
+            style: TextStyle(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
+              color: finance.netBalance >= 0 ? Colors.black : Colors.red,
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: const Text("Active Semester", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 12)),
+        )
+      ],
     );
   }
 
@@ -259,11 +305,24 @@ class _FinanceOverviewCard extends StatelessWidget {
           children: [
             Icon(icon, size: 16, color: color),
             const SizedBox(width: 4),
-            Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
+            Expanded(
+              child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
-        Text(currency.format(amount), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+              currency.format(amount),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)
+          ),
+        ),
       ],
     );
   }

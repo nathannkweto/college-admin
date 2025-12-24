@@ -15,7 +15,7 @@ class StudentExamsPage extends StatelessWidget {
             const Text("Academics", style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             const TabBar(
-              labelColor: Colors.blue,
+              labelColor: Colors.green,
               unselectedLabelColor: Colors.grey,
               isScrollable: true,
               tabs: [
@@ -42,13 +42,13 @@ class StudentExamsPage extends StatelessWidget {
     return ListView(
       children: const [
         ListTile(
-          leading: Icon(Icons.event_note, color: Colors.orange),
+          leading: Icon(Icons.event_note, color: Colors.green),
           title: Text("Data Structures Final"),
           subtitle: Text("Dec 15, 2024 • 09:00 AM • Main Hall"),
         ),
         Divider(),
         ListTile(
-          leading: Icon(Icons.event_note, color: Colors.orange),
+          leading: Icon(Icons.event_note, color: Colors.green),
           title: Text("Web Development Project Defense"),
           subtitle: Text("Dec 18, 2024 • 02:00 PM • Lab 3"),
         ),

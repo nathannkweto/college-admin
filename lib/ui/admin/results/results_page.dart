@@ -99,8 +99,8 @@ class _UploadGradesTabState extends State<_UploadGradesTab> {
 
   Future<void> _fetchInitialData() async {
     try {
-      final yearsRes = await ApiService.get('/curriculum/academic-years');
-      final coursesRes = await ApiService.get('/curriculum/courses');
+      final yearsRes = await ApiService.get('/courses/academic-years');
+      final coursesRes = await ApiService.get('/courses/courses');
 
       if (mounted) {
         setState(() {
@@ -117,7 +117,7 @@ class _UploadGradesTabState extends State<_UploadGradesTab> {
   Future<void> _fetchSemesters(int yearId) async {
     setState(() => _semesters = []); // Clear current semesters
     try {
-      final res = await ApiService.get('/curriculum/semesters?year_id=$yearId');
+      final res = await ApiService.get('/courses/semesters?year_id=$yearId');
       if (mounted) {
         setState(() {
           _semesters = List<dynamic>.from(res['data'] ?? []);
@@ -299,7 +299,7 @@ class _UploadGradesTabState extends State<_UploadGradesTab> {
         "score": double.parse(r['score_ctrl'].text),
       }).toList();
 
-      await ApiService.post('/exams/batch', {
+      await ApiService.post('/grading/batch', {
         "student_code": _studentCodeCtrl.text.trim(),
         "semester_id": _selectedSemesterId,
         "grades": grades,

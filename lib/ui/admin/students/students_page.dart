@@ -18,7 +18,7 @@ class _StudentsPageState extends State<StudentsPage> {
   // Pagination State
   int _currentPage = 1;
   final int _limit = 20;
-  bool _hasMore = true; // To track if we can go to next page
+  bool _hasMore = true;
 
   @override
   void initState() {
@@ -37,17 +37,10 @@ class _StudentsPageState extends State<StudentsPage> {
 
       List<dynamic> listData = [];
 
-      // FIX: Handle the new spec structure (response['data'])
       if (response is Map<String, dynamic> && response['data'] is List) {
         listData = response['data'];
-
-        // Optional: Update pagination if 'meta' exists
-        if (response['meta'] != null) {
-          // You can store total pages here if you want to disable the 'Next' button accurately
-          // int totalPages = response['meta']['pages'];
-        }
+        // Optional: Handle meta/pagination here
       } else {
-        // Fallback for empty or error states
         listData = [];
       }
 
@@ -69,6 +62,7 @@ class _StudentsPageState extends State<StudentsPage> {
       }
     }
   }
+
   void _onPageChanged(int newPage) {
     setState(() => _currentPage = newPage);
     _fetchStudents();
@@ -81,7 +75,6 @@ class _StudentsPageState extends State<StudentsPage> {
     );
 
     if (result == true) {
-      // Refresh list if a student was added
       _fetchStudents();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Student registered successfully"), backgroundColor: Colors.green),
@@ -92,15 +85,19 @@ class _StudentsPageState extends State<StudentsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Inherit background
+      backgroundColor: Colors.transparent,
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HEADER ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // --- FIXED HEADER ---
+            // Changed from Row to Wrap to handle small screens (332px width)
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 20, // Horizontal space between items
+              runSpacing: 20, // Vertical space if button drops down
               children: [
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,51 +185,64 @@ class _StudentsPageState extends State<StudentsPage> {
       );
     }
 
-    // --- DATA TABLE ---
+    // --- FIXED DATA TABLE ---
     return Container(
-      // ... decoration ...
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: SingleChildScrollView(
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
-          columns: const [
-            DataColumn(label: Text("Student ID")), // Changed from "ID"
-            DataColumn(label: Text("Name")),
-            DataColumn(label: Text("Program")),
-            DataColumn(label: Text("Actions")),
-          ],
-          rows: _students.map((student) {
-            return DataRow(cells: [
-              // 1. Student ID (e.g. 2023UG...)
-              DataCell(Text(student.studentId, style: const TextStyle(fontWeight: FontWeight.bold))),
+        scrollDirection: Axis.vertical,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal, // Add horizontal scrolling for small screens
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
+            columns: const [
+              DataColumn(label: Text("Student ID")),
+              DataColumn(label: Text("Name")),
+              DataColumn(label: Text("Program")),
+              DataColumn(label: Text("Actions")),
+            ],
+            rows: _students.map((student) {
+              return DataRow(cells: [
+                DataCell(Text(student.studentId, style: const TextStyle(fontWeight: FontWeight.bold))),
 
-              // 2. Name
-              DataCell(Row(
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: Colors.blue.shade50,
-                    child: Text(student.name.isNotEmpty ? student.name[0] : "?",
-                        style: TextStyle(color: Colors.blue.shade800, fontSize: 12)),
+                // Fixed: Defensive coding for Name Column overflow
+                DataCell(
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 200), // Limit width
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: Colors.blue.shade50,
+                          child: Text(student.name.isNotEmpty ? student.name[0] : "?",
+                              style: TextStyle(color: Colors.blue.shade800, fontSize: 12)),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible( // Allows text to shrink/wrap
+                          child: Text(
+                            student.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(student.name),
-                ],
-              )),
+                ),
 
-              // 3. Program Name
-              DataCell(Text(student.program)),
+                DataCell(Text(student.program)),
 
-              // 4. Actions
-              DataCell(Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
-                    onPressed: () {},
-                  ),
-                ],
-              )),
-            ]);
-          }).toList(),
+                DataCell(IconButton(
+                  icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                  onPressed: () {},
+                )),
+              ]);
+            }).toList(),
+          ),
         ),
       ),
     );

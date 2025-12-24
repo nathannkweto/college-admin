@@ -49,7 +49,7 @@ class _AddStudentDialogState extends State<AddStudentDialog> {
   // Fetch Levels and their nested Programs
   Future<void> _fetchLevels() async {
     try {
-      final response = await ApiService.get('/curriculum/levels');
+      final response = await ApiService.get('/courses/levels');
       if (mounted) {
         setState(() {
           _levels = response['data'] ?? [];
