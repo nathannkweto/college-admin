@@ -18,7 +18,7 @@ class _LecturersPageState extends State<LecturersPage> {
   // Pagination State
   int _currentPage = 1;
   final int _limit = 20;
-  bool _hasMore = true; // To track if we can go to next page
+  bool _hasMore = true;
 
   @override
   void initState() {
@@ -37,17 +37,9 @@ class _LecturersPageState extends State<LecturersPage> {
 
       List<dynamic> listData = [];
 
-      // FIX: Handle the new spec structure (response['data'])
       if (response is Map<String, dynamic> && response['data'] is List) {
         listData = response['data'];
-
-        // Optional: Update pagination if 'meta' exists
-        if (response['meta'] != null) {
-          // You can store total pages here if you want to disable the 'Next' button accurately
-          // int totalPages = response['meta']['pages'];
-        }
       } else {
-        // Fallback for empty or error states
         listData = [];
       }
 
@@ -69,6 +61,7 @@ class _LecturersPageState extends State<LecturersPage> {
       }
     }
   }
+
   void _onPageChanged(int newPage) {
     setState(() => _currentPage = newPage);
     _fetchLecturers();
@@ -81,7 +74,6 @@ class _LecturersPageState extends State<LecturersPage> {
     );
 
     if (result == true) {
-      // Refresh list if a student was added
       _fetchLecturers();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Lecturer registered successfully"), backgroundColor: Colors.green),
@@ -92,15 +84,18 @@ class _LecturersPageState extends State<LecturersPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent, // Inherit background
+      backgroundColor: Colors.transparent,
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- HEADER ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // --- FIXED HEADER (Uses Wrap to prevent overflow) ---
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 20, // Horizontal space
+              runSpacing: 20, // Vertical space
               children: [
                 const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,51 +183,64 @@ class _LecturersPageState extends State<LecturersPage> {
       );
     }
 
-    // --- DATA TABLE ---
+    // --- FIXED DATA TABLE ---
     return Container(
-      // ... decoration ...
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: SingleChildScrollView(
-        child: DataTable(
-          headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
-          columns: const [
-            DataColumn(label: Text("Lecturer ID")),
-            DataColumn(label: Text("Name")),
-            DataColumn(label: Text("Department")),
-            DataColumn(label: Text("Action")),
-          ],
-          rows: _lecturers.map((lecturer) {
-            return DataRow(cells: [
-              // 1. Student ID (e.g. 2023UG...)
-              DataCell(Text(lecturer.staffId, style: const TextStyle(fontWeight: FontWeight.bold))),
+        scrollDirection: Axis.vertical,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal, // Enables horizontal scrolling on small screens
+          child: DataTable(
+            headingRowColor: MaterialStateProperty.all(Colors.grey.shade50),
+            columns: const [
+              DataColumn(label: Text("Lecturer ID")),
+              DataColumn(label: Text("Name")),
+              DataColumn(label: Text("Department")),
+              DataColumn(label: Text("Action")),
+            ],
+            rows: _lecturers.map((lecturer) {
+              return DataRow(cells: [
+                DataCell(Text(lecturer.staffId, style: const TextStyle(fontWeight: FontWeight.bold))),
 
-              // 2. Name
-              DataCell(Row(
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: Colors.blue.shade50,
-                    child: Text(lecturer.name.isNotEmpty ? lecturer.name[0] : "?",
-                        style: TextStyle(color: Colors.blue.shade800, fontSize: 12)),
+                // Fixed Name Cell: Prevents overflow
+                DataCell(
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 200),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 14,
+                          backgroundColor: Colors.blue.shade50,
+                          child: Text(lecturer.name.isNotEmpty ? lecturer.name[0] : "?",
+                              style: TextStyle(color: Colors.blue.shade800, fontSize: 12)),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible( // Allows text to shrink
+                          child: Text(
+                            lecturer.name,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(lecturer.name),
-                ],
-              )),
+                ),
 
-              // 3. Program Name
-              DataCell(Text(lecturer.department)),
+                DataCell(Text(lecturer.department)),
 
-              // 4. Actions
-              DataCell(Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
-                    onPressed: () {},
-                  ),
-                ],
-              )),
-            ]);
-          }).toList(),
+                DataCell(IconButton(
+                  icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                  onPressed: () {},
+                )),
+              ]);
+            }).toList(),
+          ),
         ),
       ),
     );
