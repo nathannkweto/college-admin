@@ -23,7 +23,7 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
     setState(() => _isSubmitting = true);
 
     try {
-      await ApiService.post('/fees/transactions', {
+      await ApiService.post('/finance/transactions', {
         "title": _titleCtrl.text.trim(),
         "type": _type,
         "amount": double.parse(_amountCtrl.text.trim()),

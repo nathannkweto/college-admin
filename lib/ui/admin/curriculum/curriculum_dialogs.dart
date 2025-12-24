@@ -30,7 +30,7 @@ class AddDepartmentDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: () async {
             if (_formKey.currentState!.validate()) {
-              await ApiService.post('/courses/departments', {
+              await ApiService.post('/curriculum/departments', {
                 "name": _nameCtrl.text,
                 "code": _codeCtrl.text,
                 "number": int.parse(_numCtrl.text),
@@ -71,7 +71,7 @@ class _AddProgramDialogState extends State<AddProgramDialog> {
 
   Future<void> _fetchLevels() async {
     try {
-      final res = await ApiService.get('/courses/levels');
+      final res = await ApiService.get('/curriculum/levels');
       if (mounted) {
         setState(() {
           _levels = List<dynamic>.from(res['data'] ?? []);
@@ -123,7 +123,7 @@ class _AddProgramDialogState extends State<AddProgramDialog> {
         ElevatedButton(
           onPressed: _isLoading ? null : () async {
             if (_formKey.currentState!.validate()) {
-              await ApiService.post('/courses/programs', {
+              await ApiService.post('/curriculum/programs', {
                 "name": _nameCtrl.text,
                 "tag": _tagCtrl.text,
                 "program_number": int.parse(_numCtrl.text),
@@ -164,7 +164,7 @@ class _AddCourseDialogState extends State<AddCourseDialog> {
 
   Future<void> _fetchDepts() async {
     try {
-      final res = await ApiService.get('/courses/departments');
+      final res = await ApiService.get('/curriculum/departments');
       if (mounted) {
         setState(() {
           _depts = List<dynamic>.from(res['data'] ?? []);
@@ -212,7 +212,7 @@ class _AddCourseDialogState extends State<AddCourseDialog> {
         ElevatedButton(
           onPressed: _isLoading ? null : () async {
             if (_formKey.currentState!.validate()) {
-              await ApiService.post('/courses/courses', {
+              await ApiService.post('/curriculum/courses', {
                 "name": _nameCtrl.text,
                 "code": _codeCtrl.text,
                 "department_id": _selectedDeptId,
@@ -270,7 +270,7 @@ class AddLevelDialog extends StatelessWidget {
         ElevatedButton(
           onPressed: () async {
             if (_formKey.currentState!.validate()) {
-              await ApiService.post('/courses/levels', {
+              await ApiService.post('/curriculum/levels', {
                 "name": _nameCtrl.text.trim(),
                 "tag": _tagCtrl.text.trim(),
               });
@@ -308,7 +308,7 @@ class _StartSemesterDialogState extends State<StartSemesterDialog> {
 
   Future<void> _fetchYears() async {
     try {
-      final res = await ApiService.get('/courses/academic-years');
+      final res = await ApiService.get('/curriculum/academic-years');
       if (mounted) {
         setState(() {
           _years = List<dynamic>.from(res['data'] ?? []);
@@ -372,7 +372,7 @@ class _StartSemesterDialogState extends State<StartSemesterDialog> {
         ElevatedButton(
           onPressed: _isLoading ? null : () async {
             if (_formKey.currentState!.validate()) {
-              await ApiService.post('/courses/semesters', {
+              await ApiService.post('/curriculum/semesters', {
                 "semester_number": _selectedSemesterNumber,
                 "academic_year_id": _selectedYearId,
               });

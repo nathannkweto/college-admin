@@ -31,20 +31,20 @@ class _CurriculumPageState extends State<CurriculumPage> with SingleTickerProvid
     setState(() => _isLoading = true);
     try {
       // 1. Departments
-      final deptRes = await ApiService.get('/courses/departments');
+      final deptRes = await ApiService.get('/curriculum/departments');
       if (deptRes is Map && deptRes['data'] is List) {
         _departments = (deptRes['data'] as List).map((x) => Department.fromJson(x)).toList();
       }
 
       // 2. Levels (Structure)
-      final levelRes = await ApiService.get('/courses/levels');
+      final levelRes = await ApiService.get('/curriculum/levels');
       if (levelRes is Map && levelRes['data'] is List) {
         _levels = (levelRes['data'] as List).map((x) => AcademicLevel.fromJson(x)).toList();
       }
 
       // 3. Current Semester
       try {
-        final semRes = await ApiService.get('/courses/semesters/current');
+        final semRes = await ApiService.get('/curriculum/semesters/current');
         if (semRes is Map && semRes['data'] != null) {
           _currentSemester = Semester.fromJson(semRes['data']);
         }
