@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-
 import 'package:college_admin/features/student/providers/api_providers.dart';
 import 'package:student_api/api.dart';
 
@@ -10,37 +9,36 @@ class StudentDashboard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Watch Providers
     final profileAsync = ref.watch(studentProfileProvider);
     final coursesAsync = ref.watch(currentCoursesProvider);
-
-    // We request 'today' directly from the API, so we don't need to filter locally
     final timetableAsync = ref.watch(scheduleProvider('today'));
 
-    final isWide = MediaQuery.of(context).size.width > 900;
+    final double width = MediaQuery.of(context).size.width;
+    final bool isWide = width > 900;
+    final bool isMobile = width < 600;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. TOP SECTION: Student Details
-          _buildProfileSection(context, profileAsync),
+          _buildProfileSection(context, profileAsync, isMobile),
 
           const SizedBox(height: 24),
 
-          // 2. BOTTOM SECTION: Schedule (Left) + Courses (Right)
+          // 2. BOTTOM SECTION: Schedule & Courses
           if (isWide)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 2, child: _buildTimetable(timetableAsync)),
+                Expanded(flex: 2, child: _buildTimetable(timetableAsync, isMobile)),
                 const SizedBox(width: 24),
                 Expanded(flex: 1, child: _buildCurrentCourses(coursesAsync)),
               ],
             )
           else ...[
-            _buildTimetable(timetableAsync),
+            _buildTimetable(timetableAsync, isMobile),
             const SizedBox(height: 24),
             _buildCurrentCourses(coursesAsync),
           ],
@@ -49,76 +47,69 @@ class StudentDashboard extends ConsumerWidget {
     );
   }
 
-  // --- SECTION 1: Student Profile ---
+  // --- SECTION 1: Student Profile (Adaptive) ---
   Widget _buildProfileSection(
       BuildContext context,
       AsyncValue<StudentProfile> profileAsync,
+      bool isMobile,
       ) {
     return Card(
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.all(isMobile ? 20 : 24),
         child: profileAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Text(
-            "Error loading profile: $err",
-            style: const TextStyle(color: Colors.red),
-          ),
+          loading: () => const SizedBox(height: 100, child: Center(child: CircularProgressIndicator())),
+          error: (err, _) => Center(child: Text("Error: $err")),
           data: (profile) {
-            // Note: 'profile' is never null here because the provider handles nulls
-
-            final initial = (profile.firstName != null && profile.firstName!.isNotEmpty)
-                ? profile.firstName![0]
+            final String initial = (profile.firstName?.isNotEmpty == true)
+                ? profile.firstName![0].toUpperCase()
                 : "S";
 
-            return Row(
+            return Flex(
+              direction: isMobile ? Axis.vertical : Axis.horizontal,
+              crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.green.shade100,
+                  radius: isMobile ? 35 : 40,
+                  backgroundColor: Colors.green.shade50,
                   child: Text(
                     initial,
                     style: TextStyle(
-                      fontSize: 32,
+                      fontSize: isMobile ? 28 : 32,
                       color: Colors.green.shade800,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-                const SizedBox(width: 24),
+                SizedBox(width: isMobile ? 0 : 24, height: isMobile ? 16 : 0),
                 Expanded(
+                  flex: isMobile ? 0 : 1,
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "${profile.firstName} ${profile.lastName}",
-                        style: const TextStyle(
-                          fontSize: 24,
+                        "${profile.firstName ?? ''} ${profile.lastName ?? ''}".trim(),
+                        textAlign: isMobile ? TextAlign.center : TextAlign.start,
+                        style: TextStyle(
+                          fontSize: isMobile ? 20 : 24,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
                       Wrap(
-                        spacing: 24,
+                        alignment: isMobile ? WrapAlignment.center : WrapAlignment.start,
+                        spacing: 12,
                         runSpacing: 8,
                         children: [
-                          _buildProfileDetail(
-                            Icons.badge_outlined,
-                            profile.studentId ?? "N/A",
-                          ),
-                          _buildProfileDetail(
-                            Icons.email_outlined,
-                            profile.email ?? "No Email",
-                          ),
-                          _buildProfileDetail(
-                            Icons.school_outlined,
-                            profile.programName ?? "Unknown Program",
-                          ),
+                          _buildProfileDetail(Icons.badge_outlined, profile.studentId ?? "N/A", isMobile),
+                          _buildProfileDetail(Icons.email_outlined, profile.email ?? "No Email", isMobile),
+                          _buildProfileDetail(Icons.school_outlined, profile.programName ?? "Not Set", isMobile),
                         ],
                       ),
                     ],
@@ -132,36 +123,41 @@ class StudentDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildProfileDetail(IconData icon, String value) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
+  Widget _buildProfileDetail(IconData icon, String value, bool isMobile) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.blueGrey.shade400),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                color: Colors.blueGrey.shade700,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
-
-  // --- SECTION 2: Class Schedule ---
-  Widget _buildTimetable(
-      AsyncValue<List<ClassSession>> timetableAsync,
-      ) {
-    final now = DateTime.now();
-    final dateStr = "Today, ${DateFormat('MMM d').format(now)}";
+  // --- SECTION 2: Class Schedule (Adaptive) ---
+  Widget _buildTimetable(AsyncValue<List<ClassSession>> timetableAsync, bool isMobile) {
+    final dateStr = "Today, ${DateFormat('MMM d').format(DateTime.now())}";
 
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.shade200),
       ),
       child: Padding(
@@ -172,75 +168,41 @@ class StudentDashboard extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
-                    Icon(Icons.access_time_filled, color: Colors.green),
-                    SizedBox(width: 10),
-                    Text(
-                      "Class Schedule",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Icon(Icons.access_time_filled, color: Colors.green.shade600, size: 20),
+                    const SizedBox(width: 10),
+                    const Text("Schedule", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                Text(
-                  dateStr,
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                Text(dateStr, style: TextStyle(color: Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 13)),
               ],
             ),
-            const Divider(height: 30),
-
+            const Divider(height: 32),
             timetableAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(20),
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              loading: () => const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator())),
               error: (e, _) => Text("Failed to load schedule: $e"),
               data: (entries) {
                 if (entries.isEmpty) {
                   return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(
-                      child: Text(
-                        "No classes scheduled for today.",
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ),
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text("No classes scheduled for today.", style: TextStyle(color: Colors.grey))),
                   );
                 }
 
-                // Sort by time
                 final sortedEntries = [...entries];
-                sortedEntries.sort(
-                      (a, b) => (a.startTime ?? "").compareTo(b.startTime ?? ""),
-                );
-
-                // Colors to cycle through
-                final colors = [
-                  Colors.orange,
-                  Colors.blue,
-                  Colors.green,
-                  Colors.purple,
-                ];
+                sortedEntries.sort((a, b) => (a.startTime ?? "").compareTo(b.startTime ?? ""));
+                final colors = [Colors.blue, Colors.orange, Colors.purple, Colors.green];
 
                 return Column(
                   children: sortedEntries.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
-                    final color = colors[index % colors.length];
-
                     return _buildClassItem(
-                      "${item.startTime} - ${item.endTime}",
-                      item.courseName ?? "Unknown Course", // Using courseName from YAML
-                      item.location ?? "TBA",
-                      item.lecturerName ?? "TBA",
-                      color,
+                      "${entry.value.startTime ?? '--:--'} - ${entry.value.endTime ?? '--:--'}",
+                      entry.value.courseName ?? "Unknown Course",
+                      entry.value.location ?? "No Location",
+                      entry.value.lecturerName ?? "Staff",
+                      colors[entry.key % colors.length],
+                      isMobile,
                     );
                   }).toList(),
                 );
@@ -252,65 +214,51 @@ class StudentDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildClassItem(
-      String time,
-      String subject,
-      String venue,
-      String lecturer,
-      Color color,
-      ) {
+  Widget _buildClassItem(String time, String subject, String venue, String lecturer, Color color, bool isMobile) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 12.0),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: color.withOpacity(0.05),
           border: Border(left: BorderSide(color: color, width: 4)),
-          borderRadius: const BorderRadius.only(
-            topRight: Radius.circular(8),
-            bottomRight: Radius.circular(8),
-          ),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  time,
-                  style: TextStyle(fontWeight: FontWeight.bold, color: color),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
-                    const SizedBox(width: 4),
-                    Text(
-                      venue,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ],
+            // Time and Venue Column
+            SizedBox(
+              width: isMobile ? 85 : 100,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(time, style: TextStyle(fontWeight: FontWeight.w800, color: color, fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, size: 12, color: Colors.grey.shade600),
+                      const SizedBox(width: 4),
+                      Expanded(child: Text(venue, style: TextStyle(color: Colors.grey.shade600, fontSize: 11), overflow: TextOverflow.ellipsis)),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(width: 24),
+            // Vertical Divider
+            Container(
+              height: 35,
+              width: 1,
+              color: Colors.grey.shade300,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            // Subject and Lecturer Column
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    subject,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
+                  Text(subject, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                   const SizedBox(height: 4),
-                  Text(
-                    "Lecturer: $lecturer",
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
+                  Text(lecturer, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
                 ],
               ),
             ),
@@ -321,14 +269,12 @@ class StudentDashboard extends ConsumerWidget {
   }
 
   // --- SECTION 3: Enrolled Courses ---
-  Widget _buildCurrentCourses(
-      AsyncValue<List<CourseCompact>> coursesAsync,
-      ) {
+  Widget _buildCurrentCourses(AsyncValue<List<CourseCompact>> coursesAsync) {
     return Card(
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Colors.grey.shade200),
       ),
       child: Padding(
@@ -336,27 +282,15 @@ class StudentDashboard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Enrolled Courses",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("My Courses", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-
             coursesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => const Text("Could not load courses."),
               data: (courses) {
-                if (courses.isEmpty) {
-                  return const Text("No active enrollments.");
-                }
-
+                if (courses.isEmpty) return const Text("No active enrollments.", style: TextStyle(color: Colors.grey));
                 return Column(
-                  children: courses.map((course) {
-                    return _buildCourseChip(
-                      course.code ?? "---",
-                      course.name ?? "Unknown Course",
-                    );
-                  }).toList(),
+                  children: courses.map((c) => _buildCourseChip(c.code ?? "---", c.name ?? "Unknown Course")).toList(),
                 );
               },
             ),
@@ -369,37 +303,25 @@ class StudentDashboard extends ConsumerWidget {
   Widget _buildCourseChip(String code, String name) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade100),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: Colors.grey.shade300),
-              borderRadius: BorderRadius.circular(4),
+                color: Colors.white,
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(6)
             ),
-            child: Text(
-              code,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
+            child: Text(code, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              name,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-            ),
-          ),
+          Expanded(child: Text(name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
         ],
       ),
     );

@@ -17,11 +17,34 @@ jobs:
         with:
           channel: 'stable'
 
+      # 1. Setup Java (for openapi-generator-cli)
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '11'
+
+      # 2. Install OpenAPI Generator
+      - name: Install OpenAPI Generator
+        run: |
+          mkdir -p bin
+          curl https://raw.githubusercontent.com/OpenAPITools/openapi-generator/master/bin/utils/openapi-generator-cli.sh > bin/openapi-generator
+          chmod +x bin/openapi-generator
+          echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+
+      # 3. Generate API Packages
+      - name: Generate API Clients
+        run: |
+          openapi-generator generate -i specs/admin.yaml -g dart -o packages/api/admin
+          openapi-generator generate -i specs/student.yaml -g dart -o packages/api/student
+          openapi-generator generate -i specs/lecturer.yaml -g dart -o packages/api/lecturer
+
+
+      # 4. Install dependencies
+      # We use --melos or individual gets if they are local path dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # IMPORTANT: Replace 'REPO_NAME' with your repository name.
-      # If deploying to a custom domain or user page (username.github.io), remove the --base-href flag.
       - name: Build Web
         run: flutter build web --release --base-href "/college-admin/"
 

@@ -13,25 +13,22 @@ final studentApiProvider = Provider<DefaultApi>((ref) {
 
 final studentProfileProvider = FutureProvider.autoDispose<StudentProfile>((ref) async {
   final api = ref.watch(studentApiProvider);
-  // The 'response' IS the profile
-  final profile = await api.studentProfileGet();
+  final response = await api.studentProfileGet();
 
-  if (profile == null) {
+  // Access the .data property from the wrapper
+  if (response?.data == null) {
     throw Exception('Failed to load profile data');
   }
 
-  return profile; // Return directly
+  return response!.data!;
 });
 
 final currentCoursesProvider = FutureProvider.autoDispose<List<CourseCompact>>((ref) async {
   final api = ref.watch(studentApiProvider);
-  final courses = await api.studentCurrentCoursesGet();
+  final response = await api.studentCurrentCoursesGet();
 
-  if (courses == null) {
-    return [];
-  }
-
-  return courses.toList();
+  // Access .data and convert to list
+  return response?.data?.toList() ?? [];
 });
 
 // ==========================================
@@ -40,13 +37,9 @@ final currentCoursesProvider = FutureProvider.autoDispose<List<CourseCompact>>((
 
 final scheduleProvider = FutureProvider.autoDispose.family<List<ClassSession>, String>((ref, scope) async {
   final api = ref.watch(studentApiProvider);
-  final sessionList = await api.studentScheduleGet(scope: scope);
+  final response = await api.studentScheduleGet(scope: scope);
 
-  if (sessionList == null) {
-    return [];
-  }
-
-  return sessionList.toList();
+  return response?.data?.toList() ?? [];
 });
 
 // ==========================================
@@ -55,35 +48,31 @@ final scheduleProvider = FutureProvider.autoDispose.family<List<ClassSession>, S
 
 final curriculumProvider = FutureProvider.autoDispose<CurriculumProgress>((ref) async {
   final api = ref.watch(studentApiProvider);
-  final progress = await api.studentCurriculumGet();
+  final response = await api.studentCurriculumGet();
 
-  if (progress == null) {
+  if (response?.data == null) {
     throw Exception('Curriculum data unavailable');
   }
 
-  return progress;
+  return response!.data!;
 });
 
 final upcomingExamsProvider = FutureProvider.autoDispose<List<ExamEvent>>((ref) async {
   final api = ref.watch(studentApiProvider);
-  final exams = await api.studentExamsGet();
+  final response = await api.studentExamsGet();
 
-  if (exams == null) {
-    return [];
-  }
-
-  return exams.toList();
+  return response?.data?.toList() ?? [];
 });
 
 final transcriptProvider = FutureProvider.autoDispose<Transcript>((ref) async {
   final api = ref.watch(studentApiProvider);
-  final transcript = await api.studentResultsGet();
+  final response = await api.studentResultsGet();
 
-  if (transcript == null) {
+  if (response?.data == null) {
     throw Exception('Transcript unavailable');
   }
 
-  return transcript;
+  return response!.data!;
 });
 
 // ==========================================
@@ -92,11 +81,11 @@ final transcriptProvider = FutureProvider.autoDispose<Transcript>((ref) async {
 
 final financeProvider = FutureProvider.autoDispose<StudentFinance>((ref) async {
   final api = ref.watch(studentApiProvider);
-  final finance = await api.studentFinanceGet();
+  final response = await api.studentFinanceGet();
 
-  if (finance == null) {
+  if (response?.data == null) {
     throw Exception('Finance data unavailable');
   }
 
-  return finance;
+  return response!.data!;
 });

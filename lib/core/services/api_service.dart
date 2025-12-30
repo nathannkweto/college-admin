@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:admin_api/api.dart' as admin;
 import 'package:core_api/api.dart' as core;
 import 'package:student_api/api.dart' as studentapi;
+import 'package:lecturer_api/api.dart' as lecturerapi; // [NEW]
 
 class ApiService {
   static final ApiService _instance = ApiService._internal();
@@ -11,6 +12,7 @@ class ApiService {
   late admin.ApiClient _adminClient;
   late core.ApiClient _coreClient;
   late studentapi.ApiClient _studentClient;
+  late lecturerapi.ApiClient _lecturerClient; // [NEW]
 
   // Existing APIs
   late core.DefaultApi _authApi;
@@ -23,9 +25,9 @@ class ApiService {
   late admin.FinanceApi _financeApi;
   late admin.ResultsApi _resultsApi;
 
-  // [NEW] Student APIs
-  // Since your YAML didn't use 'tags', all methods likely reside in DefaultApi
+  // Portal Specific APIs
   late studentapi.DefaultApi _studentApi;
+  late lecturerapi.DefaultApi _lecturerApi; // [NEW]
 
   void init({required String baseUrl}) {
     // 1. Core Client
@@ -38,16 +40,20 @@ class ApiService {
     _adminClient.addDefaultHeader('Accept', 'application/json');
     _adminClient.addDefaultHeader('Content-Type', 'application/json');
 
-    // 3. [NEW] Student Client gets the '/student' suffix
-    // This matches the yaml server url: https://api.college.edu/v1/student
+    // 3. Student Client gets the '/student' suffix
     _studentClient = studentapi.ApiClient(basePath: '$baseUrl/student');
     _studentClient.addDefaultHeader('Accept', 'application/json');
     _studentClient.addDefaultHeader('Content-Type', 'application/json');
 
-    // Initialize Core API
+    // 4. [NEW] Lecturer Client gets the '/lecturer' suffix
+    _lecturerClient = lecturerapi.ApiClient(basePath: '$baseUrl/lecturer');
+    _lecturerClient.addDefaultHeader('Accept', 'application/json');
+    _lecturerClient.addDefaultHeader('Content-Type', 'application/json');
+
+    // Initialize APIs
     _authApi = core.DefaultApi(_coreClient);
 
-    // Initialize Admin APIs
+    // Admin
     _dashboardApi = admin.DashboardApi(_adminClient);
     _studentsApi = admin.StudentsApi(_adminClient);
     _academicsApi = admin.AcademicsApi(_adminClient);
@@ -57,15 +63,16 @@ class ApiService {
     _financeApi = admin.FinanceApi(_adminClient);
     _resultsApi = admin.ResultsApi(_adminClient);
 
-    // [NEW] Initialize Student API
+    // Portals
     _studentApi = studentapi.DefaultApi(_studentClient);
+    _lecturerApi = lecturerapi.DefaultApi(_lecturerClient); // [NEW]
   }
 
   void setToken(String token) {
-    // Apply token to all three clients
     _adminClient.addDefaultHeader('Authorization', 'Bearer $token');
     _coreClient.addDefaultHeader('Authorization', 'Bearer $token');
-    _studentClient.addDefaultHeader('Authorization', 'Bearer $token'); // [NEW]
+    _studentClient.addDefaultHeader('Authorization', 'Bearer $token');
+    _lecturerClient.addDefaultHeader('Authorization', 'Bearer $token'); // [NEW]
   }
 
   // Getters - Admin & Core
@@ -79,6 +86,9 @@ class ApiService {
   admin.TimetablesApi get timetables => _timetablesApi;
   admin.ResultsApi get results => _resultsApi;
 
-  // [NEW] Getters - Student
+  // Getters - Student
   studentapi.DefaultApi get student => _studentApi;
+
+  // Getters - Lecturer
+  lecturerapi.DefaultApi get lecturer => _lecturerApi; // [NEW]
 }

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Lecturer Portal API
-  description: API for Lecturer functionalities including dashboard, schedule, course management, and grading.
+  description: API for Lecturer functionalities. All responses are wrapped in a 'data' key.
   version: 1.0.0
 
 servers:
@@ -9,13 +9,9 @@ servers:
     description: Production Server
 
 paths:
-  # ==========================================
-  # DASHBOARD & PROFILE
-  # ==========================================
   /profile:
     get:
       summary: Get Lecturer Profile
-      description: Returns the lecturer's personal details.
       operationId: lecturerProfileGet
       responses:
         "200":
@@ -23,12 +19,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LecturerProfile"
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/LecturerProfile"
 
   /schedule:
     get:
       summary: Get Weekly Schedule
-      description: Returns the teaching schedule grouped by day.
       operationId: lecturerScheduleGet
       responses:
         "200":
@@ -36,17 +34,16 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/DailySchedule"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DailySchedule"
 
-  # ==========================================
-  # COURSES
-  # ==========================================
   /courses:
     get:
       summary: Get All Assigned Courses
-      description: Returns a detailed list of all courses assigned to this lecturer.
       operationId: lecturerCoursesGet
       responses:
         "200":
@@ -54,14 +51,16 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CourseDetail"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CourseDetail"
 
   /courses/summary:
     get:
       summary: Get Courses Summary (Dashboard)
-      description: Returns a simplified list of courses for the dashboard widget.
       operationId: lecturerCoursesSummaryGet
       responses:
         "200":
@@ -69,17 +68,16 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CourseSummary"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CourseSummary"
 
-  # ==========================================
-  # GRADING & STUDENTS
-  # ==========================================
   /courses/{course_public_id}/students:
     get:
       summary: Get Enrolled Students for Grading
-      description: Returns a list of students enrolled in a specific course.
       operationId: lecturerCourseStudentsGet
       parameters:
         - name: course_public_id
@@ -88,21 +86,22 @@ paths:
           schema:
             type: string
             format: uuid
-            description: The UUID of the course
       responses:
         "200":
           description: Successful response
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/StudentGradeRecord"
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StudentGradeRecord"
 
   /courses/{course_public_id}/grades:
     post:
       summary: Submit Grades
-      description: Submit grades for a specific course.
       operationId: lecturerGradesPost
       parameters:
         - name: course_public_id
@@ -125,115 +124,61 @@ paths:
 
 components:
   schemas:
-    # --- Profile Models ---
     LecturerProfile:
       type: object
       properties:
-        first_name:
-          type: string
-          example: "Sarah"
-        last_name:
-          type: string
-          example: "Mumba"
-        title:
-          type: string
-          example: "Dr"
-        department:
-          type: string
-          example: "Dept of Computing"
-        lecturer_id:
-          type: string
-          example: "LEC-088"
-        avatar_url:
-          type: string
-          nullable: true
+        first_name: { type: string }
+        last_name: { type: string }
+        title: { type: string }
+        department: { type: string }
+        lecturer_id: { type: string }
+        avatar_url: { type: string, nullable: true }
 
-    # --- Schedule Models ---
     DailySchedule:
       type: object
       properties:
         day_name:
           type: string
           enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
-          example: "Monday"
-        is_research_day:
-          type: boolean
-          default: false
+        is_research_day: { type: boolean, default: false }
         classes:
           type: array
-          items:
-            $ref: "#/components/schemas/ClassSession"
+          items: { $ref: "#/components/schemas/ClassSession" }
 
     ClassSession:
       type: object
       properties:
-        start_time:
-          type: string
-          example: "08:00"
-        end_time:
-          type: string
-          example: "10:00"
-        course_code:
-          type: string
-          example: "CS201"
-        course_name:
-          type: string
-          example: "Data Structures"
-        location:
-          type: string
-          example: "Lab 3"
-        color_hex:
-          type: string
-          description: "Hex color code for UI styling"
-          example: "#2196F3"
+        start_time: { type: string }
+        end_time: { type: string }
+        course_code: { type: string }
+        course_name: { type: string }
+        location: { type: string }
+        color_hex: { type: string }
 
-    # --- Course Models ---
     CourseSummary:
       type: object
-      description: Simplified course object for dashboard widgets
       properties:
-        course_code:
-          type: string
-          example: "CS201"
-        course_name:
-          type: string
-          example: "Data Structures"
-        student_count:
-          type: integer
-          example: 45
+        course_code: { type: string }
+        course_name: { type: string }
+        student_count: { type: integer }
 
     CourseDetail:
       allOf:
         - $ref: "#/components/schemas/CourseSummary"
         - type: object
           properties:
-            semester:
-              type: string
-              example: "Semester 1, 2024"
-            credit_hours:
-              type: integer
-              example: 4
-            description:
-              type: string
+            semester: { type: string }
+            credit_hours: { type: integer }
+            description: { type: string }
 
-    # --- Grading Models ---
     StudentGradeRecord:
       type: object
       properties:
-        student_public_id:
-          type: string
-          format: uuid
-        student_id:
-          type: string
-          description: "Human readable ID (e.g. STD-001)"
-        first_name:
-          type: string
-        last_name:
-          type: string
-        current_score:
-          type: number
-          nullable: true
-          description: "The grade currently assigned (if any)"
+        student_public_id: { type: string, format: uuid }
+        student_id: { type: string }
+        first_name: { type: string }
+        last_name: { type: string }
+        current_score: { type: number, nullable: true }
 
     GradeSubmission:
       type: object
@@ -246,8 +191,5 @@ components:
           items:
             type: object
             properties:
-              student_public_id:
-                type: string
-                format: uuid
-              score:
-                type: number
+              student_public_id: { type: string, format: uuid }
+              score: { type: number }

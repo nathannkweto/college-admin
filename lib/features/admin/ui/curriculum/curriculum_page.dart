@@ -26,126 +26,123 @@ class _CurriculumPageState extends State<CurriculumPage>
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = MediaQuery.of(context).size.width < 800;
+    // Breakpoints for better layout control
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 600;
+    final bool isTablet = width >= 600 && width < 1024;
 
     return Scaffold(
-      backgroundColor: Colors
-          .transparent, // Background should be handled by a parent or Scaffold
-      body: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 16 : 32,
-          vertical: 24,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- HEADER ---
-            Text(
-              "Curriculum",
-              style: TextStyle(
-                fontSize: isMobile ? 24 : 32,
-                fontWeight:
-                    FontWeight.w800, // Heavier weight for a clean modern look
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "Manage departments, courses, and academic calendar.",
-              style: TextStyle(
-                color: Colors.blueGrey.shade400,
-                fontSize: isMobile ? 13 : 15,
-              ),
-            ),
-            const SizedBox(height: 32),
+      backgroundColor: Colors.grey[50], // Standardize background
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 16 : (isTablet ? 24 : 32),
+            vertical: isMobile ? 16 : 24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- HEADER ---
+              _buildHeader(isMobile),
 
-            // --- SEAMLESS TAB BAR ---
-            // Removed the solid border container, using a soft background instead
-            Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100.withOpacity(
-                  0.5,
-                ), // Very faint background
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TabBar(
-                controller: _tabController,
-                labelColor: Colors.blue.shade700,
-                unselectedLabelColor: Colors.blueGrey.shade300,
-                indicatorSize: TabBarIndicatorSize.label,
-                indicator: UnderlineTabIndicator(
-                  borderSide: BorderSide(width: 3, color: Colors.blue.shade700),
-                  insets: const EdgeInsets.symmetric(horizontal: 16),
+              const SizedBox(height: 32),
+
+              // --- SEAMLESS TAB BAR ---
+              Container(
+                height: 50,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
                 ),
-                isScrollable: isMobile,
-                dividerColor:
-                    Colors.transparent, // Removes the solid line underneath
-                overlayColor: MaterialStateProperty.all(
-                  Colors.transparent,
-                ), // Cleaner tap effect
-                tabs: [
-                  _buildTab("Semester", Icons.calendar_today_rounded),
-                  _buildTab("Programs", Icons.school_rounded),
-                  _buildTab("Deptartments", Icons.grid_view_rounded),
-                ],
+                child: TabBar(
+                  controller: _tabController,
+                  labelColor: Colors.blue.shade700,
+                  unselectedLabelColor: Colors.blueGrey.shade300,
+                  indicatorSize: TabBarIndicatorSize.tab, // Changed to tab for better touch target
+                  indicator: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.blue.shade50.withOpacity(0.5),
+                  ),
+                  isScrollable: isMobile, // Allows horizontal swipe on small screens
+                  dividerColor: Colors.transparent,
+                  tabAlignment: isMobile ? TabAlignment.start : TabAlignment.fill,
+                  tabs: [
+                    _buildTab("Semester", Icons.calendar_today_rounded, isMobile),
+                    _buildTab("Programs", Icons.school_rounded, isMobile),
+                    _buildTab("Departments", Icons.grid_view_rounded, isMobile),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-            // --- TAB CONTENT ---
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: const [
-                  SemestersExamsTab(),
-                  ProgramsTab(),
-                  DepartmentsTab(),
-                ],
+              // --- TAB CONTENT ---
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: const [
+                    SemestersExamsTab(),
+                    ProgramsTab(), // Ensure these are responsive too!
+                    DepartmentsTab(),
+                  ],
+                ),
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Curriculum",
+          style: TextStyle(
+            fontSize: isMobile ? 24 : 32,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          "Manage departments, courses, and academic calendar.",
+          style: TextStyle(
+            color: Colors.blueGrey.shade400,
+            fontSize: isMobile ? 13 : 15,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTab(String label, IconData icon, bool isMobile) {
+    return Tab(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: isMobile ? 16 : 18),
+            const SizedBox(width: 8),
+            Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: isMobile ? 13 : 14,
+                )
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTab(String label, IconData icon) {
-    return Tab(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-}
-
-// Seamless Placeholder for unfinished tabs
-class _PlaceholderTab extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  const _PlaceholderTab({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: Colors.grey.shade200),
-          const SizedBox(height: 16),
-          Text(
-            "$title Management coming soon",
-            style: TextStyle(
-              color: Colors.grey.shade400,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }

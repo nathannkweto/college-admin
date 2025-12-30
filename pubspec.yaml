@@ -60,6 +60,8 @@ dependencies:
       path: ./packages/api/core
   student_api:
     path: ./packages/api/student
+  lecturer_api:
+    path: ./packages/api/lecturer
 
 dev_dependencies:
   flutter_test:

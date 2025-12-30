@@ -34,17 +34,18 @@ class _AdminLayoutState extends State<AdminLayout> {
         content = const DashboardPage();
         break;
       case 1:
-        content = const StudentsPage();
-        break;
-      case 2:
-        content = const LecturersPage();
-        break;
-      case 3:
         content = const CurriculumPage();
         break;
-      case 4:
+      case 2:
         content = const ResultsPage();
         break;
+      case 3:
+        content = const StudentsPage();
+        break;
+      case 4:
+        content = const LecturersPage();
+        break;
+
       case 5:
         content = const FinancePage();
         break;

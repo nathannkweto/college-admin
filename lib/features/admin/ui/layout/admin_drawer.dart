@@ -57,10 +57,10 @@ class AdminDrawer extends ConsumerWidget {
               physics: const ClampingScrollPhysics(),
               children: [
                 _buildNavItem(0, "Dashboard", Icons.dashboard, isMobile),
-                _buildNavItem(1, "Students", Icons.people, isMobile),
-                _buildNavItem(2, "Lecturers", Icons.co_present, isMobile),
-                _buildNavItem(3, "Curriculum", Icons.category, isMobile),
-                _buildNavItem(4, "Results", Icons.sticky_note_2, isMobile),
+                _buildNavItem(1, "Curriculum", Icons.category, isMobile),
+                _buildNavItem(2, "Results", Icons.sticky_note_2, isMobile),
+                _buildNavItem(3, "Students", Icons.people, isMobile),
+                _buildNavItem(4, "Lecturers", Icons.co_present, isMobile),
                 _buildNavItem(
                   5,
                   "Finances",

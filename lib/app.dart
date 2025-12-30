@@ -5,6 +5,7 @@ import 'models/enums.dart';
 import 'package:college_admin/features/auth/login_page.dart';
 import 'package:college_admin/features/admin/ui/admin_layout.dart';
 import 'package:college_admin/features/student/ui/student_layout.dart';
+import 'package:college_admin/features/lecturer/ui/lecturer_layout.dart';
 
 class CollegeApp extends StatelessWidget {
   const CollegeApp({super.key});
@@ -59,7 +60,7 @@ class AuthWrapper extends ConsumerWidget {
       case UserRole.admin:
         return const AdminLayout();
       case UserRole.lecturer:
-        return const AdminLayout();
+        return const LecturerLayout();
       case UserRole.student:
         return const StudentLayout();
       default:
