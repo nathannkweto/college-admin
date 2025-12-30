@@ -1,7 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Student Portal API
+  title: Student API
   description: API for Student functionalities. All responses are wrapped in a 'data' key.
+  x-pub-name: student_api
   version: 1.0.0
 
 servers:

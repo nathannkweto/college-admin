@@ -1,0 +1,4 @@
+pubName: "student_api"
+pubVersion: "1.0.0"
+pubDescription: "Generated student client for College Admin"
+serializationLibrary: "json_serializable"

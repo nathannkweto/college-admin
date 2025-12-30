@@ -1,0 +1,4 @@
+pubName: "lecturer_api"
+pubVersion: "1.0.0"
+pubDescription: "Generated lecturer client for College Admin"
+serializationLibrary: "json_serializable"

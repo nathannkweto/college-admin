@@ -1,0 +1,4 @@
+pubName: "admin_api"
+pubVersion: "1.0.0"
+pubDescription: "Generated admin client for College Admin"
+serializationLibrary: "json_serializable"

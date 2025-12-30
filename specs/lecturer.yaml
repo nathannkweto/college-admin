@@ -1,6 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Lecturer Portal API
+  title: Lecturer API
+  x-pub-name: lecturer_api
   description: API for Lecturer functionalities. All responses are wrapped in a 'data' key.
   version: 1.0.0
 

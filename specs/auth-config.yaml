@@ -1,0 +1,4 @@
+pubName: "core_api"
+pubVersion: "1.0.0"
+pubDescription: "Generated auth client for College Admin"
+serializationLibrary: "json_serializable"

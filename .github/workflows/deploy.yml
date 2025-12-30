@@ -35,10 +35,26 @@ jobs:
       # 3. Generate API Packages
       - name: Generate API Clients
         run: |
-          openapi-generator generate -i specs/admin.yaml -g dart -o packages/api/admin
-          openapi-generator generate -i specs/student.yaml -g dart -o packages/api/student
-          openapi-generator generate -i specs/lecturer.yaml -g dart -o packages/api/lecturer
-
+          openapi-generator generate 
+            -i specs/auth.yaml
+            -g dart 
+            -o packages/api/core
+            -c specs/auth-config.yaml
+          openapi-generator generate 
+            -i specs/admin.yaml
+            -g dart 
+            -o packages/api/admin
+            -c specs/admin-config.yaml
+          openapi-generator generate \
+            -i specs/student.yaml \
+            -g dart \
+            -o packages/api/student \
+            -c specs/student-config.yaml
+          openapi-generator generate \
+            -i specs/lecturer.yaml \
+            -g dart \
+            -o packages/api/lecturer \
+            -c specs/lecturer-config.yaml
 
       # 4. Install dependencies
       # We use --melos or individual gets if they are local path dependencies

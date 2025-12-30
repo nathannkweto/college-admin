@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: College Admin System API
+  title: Admin API
   description: Full administrative control panel for the College Management System.
   version: 1.0.0
   contact:
