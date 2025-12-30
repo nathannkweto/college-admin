@@ -1,0 +1,315 @@
+openapi: 3.0.3
+info:
+  title: Student Portal API
+  description: API for Student functionalities including dashboard, curriculum tracking, exam schedules, results, and fees.
+  version: 1.0.0
+
+servers:
+  - url: https://api.college.edu/v1/student
+    description: Production Server
+
+paths:
+  # ==========================================
+  # DASHBOARD & PROFILE
+  # ==========================================
+  /profile:
+    get:
+      summary: Get Student Profile
+      description: Returns student details, current program, and academic progress summary.
+      operationId: studentProfileGet
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentProfile'
+
+  /schedule:
+    get:
+      summary: Get Class Schedule
+      description: Returns the timetable. Can filter by 'today' or return the whole week.
+      operationId: studentScheduleGet
+      parameters:
+        - name: scope
+          in: query
+          description: 'today for dashboard widget, week for full view.'
+          schema:
+            type: string
+            enum: [today, week]
+            default: today
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClassSession'
+
+  /courses/current:
+    get:
+      summary: Get Enrolled Courses
+      description: Returns the list of courses the student is currently taking this semester.
+      operationId: studentCurrentCoursesGet
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseCompact'
+
+  # ==========================================
+  # CURRICULUM & ACADEMICS
+  # ==========================================
+  /curriculum:
+    get:
+      summary: Get Full Curriculum
+      description: Returns the full degree roadmap, grouping courses by semester.
+      operationId: studentCurriculumGet
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurriculumProgress'
+
+  /exams/upcoming:
+    get:
+      summary: Get Upcoming Exams
+      description: Returns a list of scheduled exams or defenses.
+      operationId: studentExamsGet
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExamEvent'
+
+  /results:
+    get:
+      summary: Get Transcripts/Results
+      description: Returns detailed grade history grouped by semester.
+      operationId: studentResultsGet
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transcript'
+
+  # ==========================================
+  # FEES & FINANCE
+  # ==========================================
+  /finance:
+    get:
+      summary: Get Finance Overview
+      description: Returns outstanding balance and transaction history.
+      operationId: studentFinanceGet
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentFinance'
+
+components:
+  schemas:
+    # --- Profile Models ---
+    StudentProfile:
+      type: object
+      properties:
+        student_id:
+          type: string
+          example: "STD-2024-045"
+        first_name:
+          type: string
+          example: "Nathan"
+        last_name:
+          type: string
+          example: "Banda"
+        email:
+          type: string
+          example: "nathan@college.edu"
+        program_name:
+          type: string
+          example: "BSc Computer Science"
+        current_semester:
+          type: integer
+          example: 3
+        avatar_url:
+          type: string
+          nullable: true
+
+    # --- Timetable Models ---
+    ClassSession:
+      type: object
+      properties:
+        course_code:
+          type: string
+          example: "CS201"
+        course_name:
+          type: string
+          example: "Data Structures & Algorithms"
+        start_time:
+          type: string
+          example: "08:00"
+        end_time:
+          type: string
+          example: "10:00"
+        location:
+          type: string
+          example: "Lab 3"
+        lecturer_name:
+          type: string
+          example: "Mr. Phiri"
+        color_hex:
+          type: string
+          example: "#FF9800"
+
+    # --- Course/Curriculum Models ---
+    CourseCompact:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "CS201"
+        name:
+          type: string
+          example: "Data Structures"
+
+    CurriculumProgress:
+      type: object
+      properties:
+        program_name:
+          type: string
+          example: "BSc Computer Science"
+        total_semesters:
+          type: integer
+          example: 8
+        completion_percentage:
+          type: number
+          format: float
+          example: 0.375
+        semesters:
+          type: array
+          items:
+            $ref: '#/components/schemas/CurriculumSemester'
+
+    CurriculumSemester:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Year 1 - Semester 1"
+        is_cleared:
+          type: boolean
+          example: true
+        is_current:
+          type: boolean
+          example: false
+        courses:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+              name:
+                type: string
+              is_cleared:
+                type: boolean
+
+    # --- Exams & Results Models ---
+    ExamEvent:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Data Structures Final"
+        date:
+          type: string
+          format: date
+          example: "2024-12-15"
+        time:
+          type: string
+          example: "09:00 AM"
+        location:
+          type: string
+          example: "Main Hall"
+
+    Transcript:
+      type: object
+      properties:
+        gpa:
+          type: number
+          example: 3.5
+        semesters:
+          type: array
+          items:
+            type: object
+            properties:
+              semester_name:
+                type: string
+                example: "Year 1 - Semester 1"
+              results:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    course_name:
+                      type: string
+                      example: "Intro to Programming"
+                    grade:
+                      type: string
+                      example: "A"
+                    points:
+                      type: number
+                      example: 4.0
+
+    # --- Finance Models ---
+    StudentFinance:
+      type: object
+      properties:
+        balance:
+          type: number
+          example: 1500.00
+          description: Positive value means debt, negative means credit.
+        currency:
+          type: string
+          example: "ZMW"
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/FinanceTransaction'
+
+    FinanceTransaction:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          example: "TXN-998"
+        date:
+          type: string
+          format: date
+          example: "2024-11-20"
+        title:
+          type: string
+          example: "Tuition Fee - Semester 1"
+        type:
+          type: string
+          enum: [invoice, payment]
+          example: "invoice"
+        amount:
+          type: number
+          example: 5000.00

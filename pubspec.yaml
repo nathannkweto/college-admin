@@ -42,6 +42,11 @@ dependencies:
   crypto: ^3.0.2
   collection: ^1.17.0
   shared_preferences: ^2.2.2
+  file_picker: ^8.0.0
+  url_launcher: ^6.3.0
+
+  dio: ^5.0.0
+  flutter_riverpod: ^2.4.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -49,6 +54,12 @@ dependencies:
   http: ^1.6.0
   flutter_secure_storage: ^10.0.0
   flutter_svg: ^2.2.3
+  admin_api:
+    path: ./packages/api/admin
+  core_api:
+      path: ./packages/api/core
+  student_api:
+    path: ./packages/api/student
 
 dev_dependencies:
   flutter_test:
@@ -61,6 +72,8 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.13.1
+  build_runner: ^2.10.4
+  json_serializable: ^6.11.3
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true

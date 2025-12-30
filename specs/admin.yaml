@@ -1,0 +1,1309 @@
+openapi: 3.0.3
+info:
+  title: College Admin System API
+  description: Full administrative control panel for the College Management System.
+  version: 1.0.0
+  contact:
+    name: Backend Team
+
+servers:
+  - url: https://api.college.edu/v1/admin
+    description: Production Server
+  - url: http://localhost:8000/api/admin
+    description: Local Development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+        total:
+          type: integer
+        per_page:
+          type: integer
+
+    DashboardMetrics:
+      type: object
+      required:
+        - students
+        - lecturers
+        - programs
+        - levels
+      properties:
+        students:
+          type: integer
+        lecturers:
+          type: integer
+        programs:
+          type: integer
+        levels:
+          type: integer
+
+    DashboardFinance:
+      type: object
+      required:
+        - income
+        - expenses
+        - net_balance
+      properties:
+        income:
+          type: number
+          format: double
+        expenses:
+          type: number
+          format: double
+        net_balance:
+          type: number
+          format: double
+        active_semester:
+          type: string
+          nullable: true
+
+    Department:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+
+    Qualification:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+
+    Program:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        total_semesters:
+          type: integer
+        qualification:
+          $ref: "#/components/schemas/Qualification"
+        department:
+          $ref: "#/components/schemas/Department"
+
+    Course:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        department:
+          $ref: "#/components/schemas/Department"
+
+    ProgramCourse:
+      type: object
+      required:
+        - name
+        - code
+        - pivot
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        code:
+          type: string
+        department:
+          $ref: "#/components/schemas/Department"
+        pivot:
+          type: object
+          properties:
+            semester_sequence:
+              type: integer
+
+    Semester:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        academic_year:
+          type: string
+        semester_number:
+          type: integer
+          enum: [1, 2]
+        is_active:
+          type: boolean
+        start_date:
+          type: string
+          format: date
+        length_weeks:
+          type: integer
+
+    SemesterResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Semester'
+
+    TimetableEntry:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        day:
+          type: string
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        course:
+          $ref: "#/components/schemas/Course"
+        lecturer:
+          $ref: "#/components/schemas/Lecturer"
+        location:
+          type: string
+
+    CourseResult:
+      type: object
+      properties:
+        course_name:
+          type: string
+        course_code:
+          type: string
+        ca_score:
+          type: number
+          format: float
+        exam_score:
+          type: number
+          format: float
+        total_score:
+          type: number
+          format: float
+        grade:
+          type: string
+        status:
+          type: string
+          enum: [PASS, FAIL, SUPPLIMENTARY]
+
+    StudentTranscript:
+      type: object
+      properties:
+        student:
+          $ref: "#/components/schemas/Student"
+        semester_gpa:
+          type: number
+          format: float
+        academic_standing:
+          type: string
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/CourseResult"
+
+    StudentResultSummary:
+      type: object
+      properties:
+        student_public_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        courses_failed:
+          type: integer
+        average_score:
+          type: number
+          format: float
+        semester_decision:
+          type: string
+          enum: [PROMOTED, REPEAT, DISMISSED]
+
+    Student:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        student_id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        enrollment_date:
+          type: string
+          format: date
+        national_id:
+          type: string
+        gender:
+          type: string
+          enum: [M, F]
+        program:
+          $ref: "#/components/schemas/Program"
+        current_semester_sequence:
+          type: integer
+        status:
+          type: string
+          enum: [active, inactive, graduated, suspended]
+        dob:
+          type: string
+          format: date
+        address:
+          type: string
+        phone:
+          type: string
+
+    Lecturer:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        lecturer_id:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        title:
+          type: string
+          enum: [Mr, Ms, Mrs, Dr, Prof]
+        gender:
+          type: string
+          enum: [M, F]
+        department:
+          $ref: "#/components/schemas/Department"
+        national_id:
+          type: string
+        dob:
+          type: string
+          format: date
+        address:
+          type: string
+        phone:
+          type: string
+
+    ExamPaper:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        exam_season_public_id:
+          type: string
+          format: uuid
+        course_public_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        duration_minutes:
+          type: integer
+        location:
+          type: string
+
+    FinanceFee:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        student:
+          $ref: "#/components/schemas/Student"
+        title:
+          type: string
+        total_amount:
+          type: number
+          format: double
+        balance:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [pending, partial, cleared]
+        due_date:
+          type: string
+          format: date
+          nullable: true
+
+    FinanceTransaction:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        transaction_id:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        title:
+          type: string
+        amount:
+          type: number
+          format: double
+        date:
+          type: string
+          format: date
+        fee_public_id:
+          type: string
+          format: uuid
+          nullable: true
+        note:
+          type: string
+          nullable: true
+
+
+security:
+  - bearerAuth: []
+
+paths:
+  # --- DASHBOARD ---
+  /dashboard/metrics:
+    get:
+      tags: [Dashboard]
+      summary: Get core KPI counts
+      operationId: dashboardMetricsGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DashboardMetrics"
+
+  /dashboard/finance:
+    get:
+      tags: [Dashboard]
+      summary: Get financial overview
+      operationId: dashboardFinanceGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/DashboardFinance"
+
+  # --- ACADEMICS ---
+  /departments:
+    get:
+      tags: [Academics]
+      operationId: departmentsGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Department"
+
+    post:
+      tags: [Academics]
+      operationId: departmentsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, code]
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "201":
+          description: Created
+
+  /qualifications:
+    get:
+      tags: [Academics]
+      operationId: qualificationsGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Qualification"
+
+    post:
+      tags: [Academics]
+      operationId: qualificationsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, code]
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "201":
+          description: Created
+
+  /programs:
+    get:
+      tags: [Academics]
+      operationId: programsGet
+      parameters:
+        - name: qualification_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: department_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Program"
+
+    post:
+      tags: [Academics]
+      operationId: programsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - code
+                - qualification_public_id
+                - department_public_id
+                - total_semesters
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                qualification_public_id:
+                  type: string
+                  format: uuid
+                department_public_id:
+                  type: string
+                  format: uuid
+                total_semesters:
+                  type: integer
+      responses:
+        "201":
+          description: Created
+
+  /programs/{public_id}/courses:
+    get:
+      tags: [Academics]
+      operationId: programsCoursesGet
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProgramCourse"
+
+    post:
+      tags: [Academics]
+      operationId: programsCoursesPost
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [course_public_id, semester_sequence]
+              properties:
+                course_public_id:
+                  type: string
+                  format: uuid
+                semester_sequence:
+                  type: integer
+      responses:
+        "200":
+          description: Linked
+
+  /programs/{public_id}/courses/{course_public_id}:
+    delete:
+      tags: [Academics]
+      operationId: programsCoursesDelete
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: course_public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Removed
+
+
+  /courses:
+    get:
+      tags: [Academics]
+      operationId: coursesGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Course"
+
+    post:
+      tags: [Academics]
+      operationId: coursesPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, code, department_public_id]
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                department_public_id:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Created
+
+  # --- STUDENTS ---
+  /students:
+    get:
+      tags: [Students]
+      operationId: studentsGet
+      parameters:
+        - name: program_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Student"
+
+    post:
+      tags: [Students]
+      operationId: studentsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - first_name
+                - last_name
+                - email
+                - program_public_id
+                - gender
+                - enrollment_date
+                - national_id
+                - dob
+                - address
+                - phone
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                program_public_id:
+                  type: string
+                  format: uuid
+                gender:
+                  type: string
+                  enum: [M, F]
+                enrollment_date:
+                  type: string
+                  format: date
+                national_id:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "201":
+          description: Created
+
+  /students/batch-upload:
+    post:
+      tags: [Students]
+      operationId: studentsBatchUploadPost
+      summary: Upload CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Queued
+
+  /students/promotion-preview:
+    post:
+      tags: [Students]
+      operationId: studentsPromotionPreview
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  eligible:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Student"
+                  repeating:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Student"
+
+  /students/promote:
+    post:
+      tags: [Students]
+      operationId: studentsPromotePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                exclude_student_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "200":
+          description: Job started
+
+  # --- LECTURERS ---
+  /lecturers:
+    get:
+      tags: [Lecturers]
+      operationId: lecturersGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Lecturer"
+
+    post:
+      tags: [Lecturers]
+      operationId: lecturersPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - first_name
+                - last_name
+                - email
+                - department_public_id
+                - title
+                - gender
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                department_public_id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                  enum: [Mr, Ms, Mrs, Dr, Prof]
+                gender:
+                  type: string
+                  enum: [M, F]
+                national_id:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "201":
+          description: Created
+
+  /lecturers/batch-upload:
+    post:
+      tags: [Lecturers]
+      operationId: lecturersBatchUploadPost
+      summary: Upload CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Queued
+
+
+  # --- LOGISTICS ---
+  /semesters:
+    get:
+      tags: [ Timetables ]
+      operationId: semestersGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Semester"
+
+    post:
+      tags: [ Timetables ]
+      operationId: semestersPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - academic_year
+                - semester_number
+                - length_weeks
+                - start_date
+              properties:
+                academic_year:
+                  type: string
+                semester_number:
+                  type: integer
+                start_date:
+                  type: string
+                  format: date
+                length_weeks:
+                  type: integer
+      responses:
+        "201":
+          description: Created
+
+  /semesters/active:
+    get:
+      tags: [ Timetables ]
+      operationId: semestersActiveGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SemesterResponse"
+        "404":
+          description: None active
+
+  /semesters/{public_id}/end:
+    post:
+      tags: [ Timetables ]
+      operationId: semesterEndPost
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Ended
+
+  /logistics/timetable:
+    get:
+      tags: [ Timetables ]
+      operationId: logisticsTimetableGet
+      parameters:
+        - name: semester_public_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: program_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TimetableEntry"
+
+    post:
+      tags: [ Timetables ]
+      operationId: logisticsTimetablePost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - semester_public_id
+                - program_public_id
+                - course_public_id
+                - day
+                - start_time
+                - end_time
+              properties:
+                semester_public_id:
+                  type: string
+                  format: uuid
+                program_public_id:
+                  type: string
+                  format: uuid
+                course_public_id:
+                  type: string
+                  format: uuid
+                lecturer_public_id:
+                  type: string
+                  format: uuid
+                day:
+                  type: string
+                start_time:
+                  type: string
+                  format: time
+                end_time:
+                  type: string
+                  format: time
+                location:
+                  type: string
+      responses:
+        "201":
+          description: Created
+
+  # --- EXAMS ---
+  /exams/seasons:
+    post:
+      tags: [ Exams ]
+      operationId: examSeasonsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ name, semester_public_id ]
+              properties:
+                name:
+                  type: string
+                semester_public_id:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Created
+
+  /exams/schedules:
+    post:
+      tags: [ Exams ]
+      operationId: examSchedulesPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExamPaper"
+      responses:
+        "201":
+          description: Created
+
+  # --- FINANCE ---
+  /finance/fees:
+    get:
+      tags: [ Finance ]
+      operationId: financeFeesGet
+      parameters:
+        - name: student_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ pending, partial, cleared ]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FinanceFee"
+
+    post:
+      tags: [ Finance ]
+      operationId: financeFeesPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ title, amount, target_type ]
+              properties:
+                title:
+                  type: string
+                amount:
+                  type: number
+                target_type:
+                  type: string
+                  enum: [ ALL, PROGRAM, STUDENT ]
+                target_public_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                due_date:
+                  type: string
+                  format: date
+      responses:
+        "201":
+          description: Created
+
+  /finance/transactions:
+    get:
+      tags: [ Finance ]
+      operationId: financeTransactionsGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FinanceTransaction"
+
+    post:
+      tags: [ Finance ]
+      operationId: financeTransactionsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ title, amount, type, date, transaction_id ]
+              properties:
+                title:
+                  type: string
+                amount:
+                  type: number
+                type:
+                  type: string
+                  enum: [ income, expense ]
+                date:
+                  type: string
+                  format: date
+                transaction_id:
+                  type: string
+                fee_public_id:
+                  type: string
+                  format: uuid
+                note:
+                  type: string
+      responses:
+        "201":
+          description: Recorded
+
+  /finance/students/{student_id}/fees:
+    get:
+      tags: [ Finance ]
+      operationId: financeStudentFeesGet
+      parameters:
+        - name: student_id
+          in: path
+          required: true
+          schema:
+            type: string
+            description: Supports UUID or Human Readable ID
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FinanceFee"
+
+  # --- RESULTS & PUBLISHING ---
+  /results/program-summary:
+    get:
+      tags: [ Results ]
+      summary: Get list of students in a program with result summaries
+      operationId: resultsProgramSummaryGet
+      parameters:
+        - name: program_public_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: semester_public_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_published:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/StudentResultSummary"
+
+  /results/student-transcript:
+    get:
+      tags: [ Results ]
+      summary: Get detailed course breakdown for a specific student
+      operationId: resultsStudentTranscriptGet
+      parameters:
+        - name: student_public_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: semester_public_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentTranscript"
+
+  /results/publish:
+    post:
+      tags: [ Results ]
+      summary: Publish results for a specific program and semester
+      operationId: resultsPublishPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ program_public_id, semester_public_id, action ]
+              properties:
+                program_public_id:
+                  type: string
+                  format: uuid
+                semester_public_id:
+                  type: string
+                  format: uuid
+                action:
+                  type: string
+                  enum: [ PUBLISH, UNPUBLISH ]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  status:
+                    type: string

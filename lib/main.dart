@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
-import 'providers/auth_provider.dart';
+import 'package:college_admin/core/services/api_service.dart';
+import 'config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // 1. Initialize API Service Global (Singleton)
+  ApiService().init(baseUrl: Config.baseUrl);
+
   runApp(
-    MultiProvider(
-      providers: [
-        // Initialize AuthProvider and call init() to check for stored token
-        ChangeNotifierProvider(
-          create: (_) => AuthProvider()..init(),
-        ),
-      ],
-      child: const CollegeApp(),
+    // 2. Wrap the entire app in ProviderScope
+    const ProviderScope(
+      child: CollegeApp(),
     ),
   );
 }
