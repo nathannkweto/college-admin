@@ -62,7 +62,6 @@ dependencies:
     path: ./packages/api/student
   lecturer_api:
     path: ./packages/api/lecturer
-  flutter_dotenv: ^6.0.0
 
 dev_dependencies:
   flutter_test:
