@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// Import your providers
 import 'package:college_admin/features/lecturer/providers/api_providers.dart';
+// Import the generated API models
 import 'package:lecturer_api/api.dart';
+// Import the Grading Page for navigation
+import '../grading/grading_page.dart';
 
 class LecturerDashboard extends ConsumerWidget {
   const LecturerDashboard({super.key});
@@ -14,39 +18,38 @@ class LecturerDashboard extends ConsumerWidget {
 
     final profileAsync = ref.watch(lecturerProfileProvider);
     final scheduleAsync = ref.watch(lecturerScheduleProvider);
-    final coursesAsync = ref.watch(lecturerCoursesSummaryProvider);
+    final coursesAsync = ref.watch(lecturerCoursesProvider);
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SingleChildScrollView(
-        // Reduce padding on mobile to save horizontal space
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. TOP PROFILE SECTION (Responsive)
+            // 1. TOP PROFILE SECTION
             profileAsync.when(
               data: (profile) => _buildLecturerProfile(profile, isMobile),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text("Error: $e")),
+              loading: () => const Center(child: LinearProgressIndicator()),
+              error: (e, _) => Center(child: Text("Profile Error: $e")),
             ),
 
             const SizedBox(height: 24),
 
-            // 2. MAIN CONTENT (Responsive Grid/Column)
+            // 2. MAIN CONTENT
             if (isDesktop)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(flex: 3, child: _buildScheduleSection(scheduleAsync)),
                   const SizedBox(width: 24),
-                  Expanded(flex: 2, child: _buildCoursesSection(coursesAsync)),
+                  Expanded(flex: 2, child: _buildCoursesSection(context, coursesAsync)),
                 ],
               )
             else ...[
               _buildScheduleSection(scheduleAsync),
               const SizedBox(height: 24),
-              _buildCoursesSection(coursesAsync),
+              _buildCoursesSection(context, coursesAsync),
             ],
           ],
         ),
@@ -54,7 +57,7 @@ class LecturerDashboard extends ConsumerWidget {
     );
   }
 
-  // --- RESPONSIVE PROFILE ---
+  // --- PROFILE SECTION ---
   Widget _buildLecturerProfile(LecturerProfile profile, bool isMobile) {
     return Card(
       elevation: 0,
@@ -124,36 +127,64 @@ class LecturerDashboard extends ConsumerWidget {
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Schedule", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Icon(Icons.calendar_today_outlined, size: 20, color: Colors.grey),
+                Text("Weekly Timetable",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Icon(Icons.calendar_view_week, size: 20, color: Colors.grey),
               ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Full schedule for the current semester",
+              style: TextStyle(color: Colors.grey, fontSize: 13),
             ),
             const Divider(height: 32),
             scheduleAsync.when(
-              data: (days) => ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: days.length,
-                itemBuilder: (context, index) {
-                  final day = days[index];
-                  if (day.isResearchDay || (day.classes ?? []).isEmpty) return const SizedBox.shrink();
+              data: (days) {
+                // Filter out research days if you want a compact view,
+                // or keep them to show the full week.
+                final activeDays = days.where((d) => (d.classes ?? []).isNotEmpty).toList();
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDayHeader(day.dayName?.value ?? ""),
-                      ...day.classes!.map((c) => _buildClassTile(
-                        "${c.startTime}-${c.endTime}",
-                        "${c.courseCode}",
-                        c.location ?? "TBA",
-                        _parseColor(c.colorHex),
-                      )),
-                    ],
+                if (activeDays.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20),
+                    child: Center(child: Text("No classes scheduled this week.")),
                   );
-                },
+                }
+
+                return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: activeDays.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 16),
+                  itemBuilder: (context, index) {
+                    final day = activeDays[index];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDayHeader(day.dayName.toString() ?? "Unknown"),
+                        const SizedBox(height: 8),
+                        // Using Column here ensures each class is on a new line within the day
+                        ...day.classes!.map((c) => _buildClassTile(
+                          "${c.startTime} - ${c.endTime}",
+                          "${c.courseCode}: ${c.courseName}",
+                          c.location ?? "TBA",
+                          _parseColor(c.colorHex),
+                        )),
+                      ],
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(),
+                ),
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text("Error: $e"),
+              error: (e, _) => Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text("Schedule Error: $e", style: const TextStyle(color: Colors.red)),
+              ),
             ),
           ],
         ),
@@ -161,8 +192,30 @@ class LecturerDashboard extends ConsumerWidget {
     );
   }
 
+  // --- UPDATED DAY HEADER ---
+  Widget _buildDayHeader(String day) {
+    // Handling potential Enum strings from the generator (e.g., "DayName.monday")
+    final cleanDayName = day.contains('.') ? day.split('.').last : day;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.blue.shade900,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        cleanDayName.toUpperCase(),
+        style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+            fontSize: 11,
+            letterSpacing: 1.2
+        ),
+      ),
+    );
+  }
   // --- COURSES SECTION ---
-  Widget _buildCoursesSection(AsyncValue<List<CourseSummary>> coursesAsync) {
+  Widget _buildCoursesSection(BuildContext context, AsyncValue<List<CourseAssignment>> coursesAsync) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -173,40 +226,52 @@ class LecturerDashboard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("My Courses", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("My Courses (Active)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             coursesAsync.when(
-              data: (courses) => ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: courses.length,
-                itemBuilder: (context, index) {
-                  final c = courses[index];
-                  return _buildCourseCard(c.courseCode ?? "---", c.courseName ?? "", c.studentCount ?? 0);
-                },
-              ),
+              data: (courses) {
+                if (courses.isEmpty) return const Text("No courses assigned.");
+
+                final Map<String, List<CourseAssignment>> grouped = {};
+                for (var c in courses) {
+                  final progName = c.programName ?? "Other Programs";
+                  if (!grouped.containsKey(progName)) grouped[progName] = [];
+                  grouped[progName]!.add(c);
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: grouped.length,
+                  itemBuilder: (context, index) {
+                    final programName = grouped.keys.elementAt(index);
+                    final programCourses = grouped[programName]!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+                          child: Text(
+                            programName.toUpperCase(),
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.grey.shade600,
+                                letterSpacing: 0.5
+                            ),
+                          ),
+                        ),
+                        ...programCourses.map((c) => _buildCourseCard(context, c)),
+                      ],
+                    );
+                  },
+                );
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text("Error: $e"),
+              error: (e, _) => Text("Error loading courses: $e"),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-// --- HELPERS ---
-
-  Widget _buildDayHeader(String day) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 12.0),
-      child: Text(
-          day.toUpperCase(),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.black54,
-            fontSize: 12,
-            letterSpacing: 1.1,
-          )
       ),
     );
   }
@@ -224,10 +289,7 @@ class LecturerDashboard extends ConsumerWidget {
         children: [
           SizedBox(
             width: 90,
-            child: Text(
-                time,
-                style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 13)
-            ),
+            child: Text(time, style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 13)),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -236,13 +298,7 @@ class LecturerDashboard extends ConsumerWidget {
               children: [
                 Text(course, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 2),
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
-                    const SizedBox(width: 4),
-                    Text(venue, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
+                Text(venue, style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           ),
@@ -251,38 +307,44 @@ class LecturerDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildCourseCard(String code, String name, int students) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8)
+  Widget _buildCourseCard(BuildContext context, CourseAssignment course) {
+    return InkWell(
+      onTap: () {
+        if (course.publicId != null) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) =>
+              GradingPage(coursePublicId: course.publicId!)
+          ));
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(8)),
+              child: Icon(Icons.class_outlined, color: Colors.blue.shade700, size: 20),
             ),
-            child: const Icon(Icons.book_outlined, color: Colors.orange, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text("$code • $students Students",
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(course.courseName ?? "Unknown", style: const TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 4),
+                  Text("${course.courseCode} • Sem ${course.semesterSequence}", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-        ],
+            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+          ],
+        ),
       ),
     );
   }
@@ -290,10 +352,7 @@ class LecturerDashboard extends ConsumerWidget {
   Widget _buildBadge(IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(6)
-      ),
+      decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

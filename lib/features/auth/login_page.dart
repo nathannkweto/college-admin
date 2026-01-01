@@ -99,8 +99,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   // Safe Image Loading
                   Image.asset(
-                    'assets/icons/logo.jpg',
-                    height: 150,
+                    'assets/images/logo.png',
+                    height: 100,
+                    fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) {
                       return const Icon(
                         Icons.school,

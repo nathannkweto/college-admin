@@ -1,12 +1,11 @@
 openapi: 3.0.3
 info:
   title: Student API
-  description: API for Student functionalities. All responses are wrapped in a 'data' key.
-  x-pub-name: student_api
+  description: API for Student functionalities.
   version: 1.0.0
 
 servers:
-  - url: https://api.college.edu/v1/student
+  - url: https://api.college.edu/api/v1/student
 
 paths:
   /profile:

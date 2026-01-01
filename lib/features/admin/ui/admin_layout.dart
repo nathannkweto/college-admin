@@ -1,3 +1,4 @@
+import 'package:college_admin/features/admin/ui/results/results_page.dart';
 import 'package:flutter/material.dart';
 import 'layout/admin_drawer.dart';
 import 'dashboard/dashboard_page.dart';
@@ -5,7 +6,7 @@ import 'students/students_page.dart';
 import 'lecturers/lecturers_page.dart';
 import 'curriculum/curriculum_page.dart';
 import 'finance/finance_page.dart';
-import 'results/results_page.dart';
+import 'results/student_transcript_page.dart';
 
 class AdminLayout extends StatefulWidget {
   const AdminLayout({super.key});
@@ -37,7 +38,7 @@ class _AdminLayoutState extends State<AdminLayout> {
         content = const CurriculumPage();
         break;
       case 2:
-        content = const ResultsPage();
+        content = const ResultsManagementPage();
         break;
       case 3:
         content = const StudentsPage();

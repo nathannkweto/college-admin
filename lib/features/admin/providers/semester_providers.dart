@@ -5,14 +5,12 @@ import '../../../core/services/api_service.dart';
 // ==========================================
 // 1. FILTER CLASS
 // ==========================================
+// We use this to uniquely identify a specific timetable view
 class TimetableFilter {
   final String semesterId;
   final String programId;
 
-  TimetableFilter({
-    required this.semesterId,
-    required this.programId,
-  });
+  TimetableFilter({required this.semesterId, required this.programId});
 
   @override
   bool operator ==(Object other) =>
@@ -29,27 +27,29 @@ class TimetableFilter {
 // ==========================================
 // 2. DATA PROVIDER
 // ==========================================
+
 final timetableEntriesProvider = FutureProvider.family
-    .autoDispose<List<admin.TimetableEntry>, TimetableFilter>((
-    ref,
-    filter,
-    ) async {
+    .autoDispose<List<admin.TimetableEntry>, TimetableFilter>((ref, filter) async {
+  print("🔄 [Timetable] Fetching for Sem: ${filter.semesterId}...");
   try {
+    // Calling the Generated API
     final result = await ApiService().timetables.logisticsTimetableGet(
       filter.semesterId,
       programPublicId: filter.programId,
     );
 
-    // 🔴 FIX: Access .data because the response is now wrapped
+    // Return the list of entries
     return result?.data?.toList() ?? [];
   } catch (e) {
-    return [];
+    print("🔴 [Timetable] Error: $e");
+    throw e;
   }
 });
 
 // ==========================================
-// 3. ACTION CONTROLLER
+// 3. CONTROLLER
 // ==========================================
+
 final timetableControllerProvider =
 StateNotifierProvider<TimetableController, AsyncValue<void>>((ref) {
   return TimetableController(ref);
@@ -58,72 +58,63 @@ StateNotifierProvider<TimetableController, AsyncValue<void>>((ref) {
 class TimetableController extends StateNotifier<AsyncValue<void>> {
   final Ref ref;
 
-  TimetableController(this.ref) : super(const AsyncData(null));
+  TimetableController(this.ref) : super(const AsyncValue.data(null));
 
   Future<bool> assignClass({
     required String programId,
     required String semesterId,
     required String courseId,
+    required String lecturerId, // <--- Added Lecturer
     required String day,
     required String startTime,
-    String? roomId,
+    required String endTime,
+    required String location,
   }) async {
-    state = const AsyncLoading();
+    state = const AsyncValue.loading();
     try {
-      final hour = int.parse(startTime.split(':')[0]);
-      final endTime = "${(hour + 1).toString().padLeft(2, '0')}:00:00";
-      final formattedStartTime = "$startTime:00";
+      print("🚀 Assigning Class: $courseId to $lecturerId at $startTime");
 
       final req = admin.LogisticsTimetablePostRequest(
-        programPublicId: programId,
         semesterPublicId: semesterId,
+        programPublicId: programId,
         coursePublicId: courseId,
+        lecturerPublicId: lecturerId,
         day: day,
-        startTime: formattedStartTime,
+        startTime: startTime,
         endTime: endTime,
-        location: roomId,
-        // Note: 'lecturerPublicId' is available in your spec but optional.
-        // If you need to assign a lecturer later, add it here.
+        location: location,
       );
 
       await ApiService().timetables.logisticsTimetablePost(req);
 
-      // Refresh the grid
+      // Refresh the specific timetable view
       ref.invalidate(timetableEntriesProvider(
         TimetableFilter(semesterId: semesterId, programId: programId),
       ));
 
-      state = const AsyncData(null);
+      state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
-      state = AsyncError(e, st);
+      print("🔴 Assign Class Error: $e");
+      state = AsyncValue.error(e, st);
       return false;
     }
   }
 
   Future<bool> removeClass({
-    required String entryId,
+    required String entryId, // You'll need a DELETE endpoint in your API for this
     required String programId,
     required String semesterId,
   }) async {
-    state = const AsyncLoading();
-    try {
-      // ⚠️ NOTE: Your spec is still missing the DELETE endpoint for /logistics/timetable
-      // You need to add a DELETE path in your YAML if you want this to work.
+    // Placeholder: Assuming you will add a delete endpoint
+    // await ApiService().timetables.logisticsTimetableEntryDelete(entryId);
 
-      print("Delete functionality is currently missing from the generated API.");
+    // For now, we just print
+    print("🗑️ Removing Class Entry: $entryId");
 
-      // Refresh to simulate update
-      await Future.delayed(const Duration(milliseconds: 500));
-      ref.invalidate(timetableEntriesProvider(
-        TimetableFilter(semesterId: semesterId, programId: programId),
-      ));
-
-      state = const AsyncData(null);
-      return true;
-    } catch (e, st) {
-      state = AsyncError(e, st);
-      return false;
-    }
+    ref.invalidate(timetableEntriesProvider(
+      TimetableFilter(semesterId: semesterId, programId: programId),
+    ));
+    return true;
   }
 }

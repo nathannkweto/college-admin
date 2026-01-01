@@ -5,17 +5,14 @@ import 'package:admin_api/api.dart' as admin;
 import '../../../core/services/api_service.dart';
 
 // ==========================================
-// 1. DATA FETCHING PROVIDERS (WITH DEBUGGING)
+// 1. DATA FETCHING PROVIDERS
 // ==========================================
 
 // --- ACADEMICS ---
 
 final departmentsProvider = FutureProvider.autoDispose<List<admin.Department>>((ref) async {
-  print("🔄 [Departments] Fetching...");
   try {
-    // UPDATED: Now returns a wrapper, access .data
     final result = await ApiService().academics.departmentsGet();
-    print("✅ [Departments] Success: Found ${result?.data?.length ?? 0} items");
     return result?.data?.toList() ?? [];
   } catch (e) {
     print("🔴 [Departments] Error: $e");
@@ -24,15 +21,9 @@ final departmentsProvider = FutureProvider.autoDispose<List<admin.Department>>((
 });
 
 final programsProvider = FutureProvider.autoDispose<List<admin.Program>>((ref) async {
-  print("🔄 [Programs] Fetching...");
   try {
-    // UPDATED: No need for dynamic casting hacks anymore.
-    // The generated client now correctly expects the wrapper object.
     final response = await ApiService().academics.programsGet();
-
-    final list = response?.data?.toList() ?? [];
-    print("✅ [Programs] Success: Found ${list.length} items");
-    return list;
+    return response?.data?.toList() ?? [];
   } catch (e) {
     print("🔴 [Programs] Error: $e");
     throw e;
@@ -40,11 +31,8 @@ final programsProvider = FutureProvider.autoDispose<List<admin.Program>>((ref) a
 });
 
 final coursesProvider = FutureProvider.autoDispose<List<admin.Course>>((ref) async {
-  print("🔄 [Courses] Fetching...");
   try {
-    // UPDATED: Access .data
     final result = await ApiService().academics.coursesGet();
-    print("✅ [Courses] Success: Found ${result?.data?.length ?? 0} items");
     return result?.data?.toList() ?? [];
   } catch (e) {
     print("🔴 [Courses] Error: $e");
@@ -53,11 +41,8 @@ final coursesProvider = FutureProvider.autoDispose<List<admin.Course>>((ref) asy
 });
 
 final qualificationsProvider = FutureProvider.autoDispose<List<admin.Qualification>>((ref) async {
-  print("🔄 [Qualifications] Fetching...");
   try {
-    // UPDATED: Access .data
     final result = await ApiService().academics.qualificationsGet();
-    print("✅ [Qualifications] Success: Found ${result?.data?.length ?? 0} items");
     return result?.data?.toList() ?? [];
   } catch (e) {
     print("🔴 [Qualifications] Error: $e");
@@ -65,11 +50,19 @@ final qualificationsProvider = FutureProvider.autoDispose<List<admin.Qualificati
   }
 });
 
+final lecturersProvider = FutureProvider.autoDispose<List<admin.Lecturer>>((ref) async {
+  try {
+    final result = await ApiService().lecturers.lecturersGet();
+    return result?.data?.toList() ?? [];
+  } catch (e) {
+    print("🔴 [Lecturers] Error: $e");
+    throw e;
+  }
+});
+
 // --- CURRICULUM (Program Specific) ---
 final curriculumProvider = FutureProvider.family.autoDispose<List<admin.ProgramCourse>, String>((ref, programId) async {
-  print("🔄 [Curriculum] Fetching for Program $programId...");
   try {
-    // UPDATED: Access .data
     final result = await ApiService().academics.programsCoursesGet(programId);
     return result?.data?.toList() ?? [];
   } catch (e) {
@@ -82,7 +75,6 @@ final curriculumProvider = FutureProvider.family.autoDispose<List<admin.ProgramC
 
 final semestersProvider = FutureProvider.autoDispose<List<admin.Semester>>((ref) async {
   try {
-    // UPDATED: Access .data
     final result = await ApiService().timetables.semestersGet();
     return result?.data?.toList() ?? [];
   } catch (e) {
@@ -92,33 +84,39 @@ final semestersProvider = FutureProvider.autoDispose<List<admin.Semester>>((ref)
 });
 
 final activeSemesterProvider = FutureProvider.autoDispose<admin.Semester?>((ref) async {
-  print("🔄 [Active Semester] Fetching...");
   try {
-    // 1. Await the response (this returns SemesterResponse?)
     final response = await ApiService().timetables.semestersActiveGet();
-
-    // 2. Extract the actual Semester model from the 'data' field
-    // response is SemesterResponse, response.data is Semester
-    final admin.Semester? semester = response?.data;
-
-    if (semester == null) {
-      print("ℹ️ [Active Semester] Successfully fetched, but no active semester found (data is null).");
-      return null;
-    }
-
-    print("✅ [Active Semester] Parsed: ${semester.academicYear} - ${semester.semesterNumber}");
-    return semester;
+    return response?.data;
   } catch (e) {
     print("🔴 [Active Semester] Error: $e");
     return null;
   }
 });
 
-// --- EXAMS ---
-final examSeasonsProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
-  // Placeholder until API endpoint exists
-  return [];
+// --- EXAMS (SEASONS) ---
+
+// 1. Provider for the single Active Exam Season (if any)
+final activeExamSeasonProvider = FutureProvider.autoDispose<admin.ExamSeason?>((ref) async {
+  try {
+    final response = await ApiService().exams.examSeasonsActive();
+    return response?.data;
+  } catch (e) {
+    // It is common to not have an active season, so we just return null
+    return null;
+  }
 });
+
+// 2. Provider for All Exam Seasons (History)
+final examSeasonsProvider = FutureProvider.autoDispose<List<admin.ExamSeason>>((ref) async {
+  try {
+    final result = await ApiService().exams.examSeasonsList();
+    return result?.data?.toList() ?? [];
+  } catch (e) {
+    print("🔴 [Exam Seasons] Error: $e");
+    return [];
+  }
+});
+
 
 // ==========================================
 // 2. ACTION CONTROLLER
@@ -134,6 +132,7 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
 
   CurriculumController(this.ref) : super(const AsyncValue.data(null));
 
+  // --- HELPER: Handles Loading & Error States ---
   Future<bool> _perform(Future<void> Function() action) async {
     state = const AsyncValue.loading();
     try {
@@ -155,7 +154,6 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
 
   Future<bool> addDepartment(String name, String code) async {
     return _perform(() async {
-      print("🚀 Adding Department: $name");
       final req = admin.DepartmentsPostRequest(name: name, code: code);
       await ApiService().academics.departmentsPost(req);
       ref.invalidate(departmentsProvider);
@@ -164,8 +162,6 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
 
   Future<bool> addQualification(String name, String code) async {
     return _perform(() async {
-      print("🚀 Adding Qualification: $name");
-      // FIX: Used to be DepartmentsPostRequest, changed to QualificationsPostRequest
       final req = admin.DepartmentsPostRequest(name: name, code: code);
       await ApiService().academics.qualificationsPost(req);
       ref.invalidate(qualificationsProvider);
@@ -180,7 +176,6 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
     required int semesters,
   }) async {
     return _perform(() async {
-      print("🚀 Adding Program: $name");
       final req = admin.ProgramsPostRequest(
         name: name,
         code: code,
@@ -208,12 +203,14 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
   Future<bool> addCourseToSemester(
       String programId,
       String courseId,
-      int semesterSeq,
-      ) async {
+      int semesterSeq, {
+        String? lecturerId,
+      }) async {
     return _perform(() async {
       final req = admin.ProgramsCoursesPostRequest(
         coursePublicId: courseId,
         semesterSequence: semesterSeq,
+        lecturerPublicId: lecturerId,
       );
       await ApiService().academics.programsCoursesPost(programId, req);
       ref.invalidate(curriculumProvider(programId));
@@ -254,14 +251,13 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
       await ApiService().timetables.semesterEndPost(semesterId);
       ref.invalidate(semestersProvider);
       ref.invalidate(activeSemesterProvider);
+      ref.invalidate(activeExamSeasonProvider);
     });
   }
 
   Future<dynamic> getPromotionPreview() async {
     try {
       final result = await ApiService().students.studentsPromotionPreview();
-      // Note: Promotion Preview in spec is { eligible: [...], repeating: [...] }
-      // The generator usually returns a specific object for this (e.g. StudentsPromotionPreview200Response)
       return result;
     } catch (e) {
       print("Error fetching promotion preview: $e");
@@ -280,7 +276,7 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
     });
   }
 
-  // --- EXAM ACTIONS ---
+  // --- EXAM SEASONS ACTIONS ---
 
   Future<bool> addExamSeason(String name, String semesterId) async {
     return _perform(() async {
@@ -289,6 +285,65 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
         semesterPublicId: semesterId,
       );
       await ApiService().exams.examSeasonsPost(req);
+
+      ref.invalidate(examSeasonsProvider);
+      ref.invalidate(activeExamSeasonProvider);
+      ref.invalidate(activeSemesterProvider);
+    });
+  }
+
+  Future<bool> endExamSession(String seasonPublicId) async {
+    return _perform(() async {
+      await ApiService().exams.examSeasonsEnd(seasonPublicId);
+
+      ref.invalidate(examSeasonsProvider);
+      ref.invalidate(activeExamSeasonProvider);
+      ref.invalidate(activeSemesterProvider);
+    });
+  }
+
+  // --- EXAM SCHEDULING ACTIONS (Moved Inside Class) ---
+
+  // Fetch existing schedules for a specific program & season
+  Future<List<admin.ExamPaper>> fetchExamSchedules(
+      String programId, String seasonId) async {
+    try {
+      // Note: Using named parameters as is standard for generated query params
+      final result = await ApiService().exams.examSchedulesList(
+        programId,
+        seasonId,
+      );
+      return result?.data?.toList() ?? [];
+    } catch (e) {
+      print("🔴 [Exam Schedules] Error: $e");
+      return [];
+    }
+  }
+
+  // Schedule (or update) a specific exam
+  Future<bool> scheduleExam({
+    required String seasonId,
+    required String programId,
+    required String courseId,
+    required String date, // "YYYY-MM-DD"
+    required String startTime, // "HH:MM"
+    required int duration,
+    required String location,
+  }) async {
+    return _perform(() async {
+      final req = admin.ExamPaperRequest(
+        seasonPublicId: seasonId,
+        programPublicId: programId,
+        coursePublicId: courseId,
+        date: DateTime.parse(date),
+        startTime: startTime,
+        durationMinutes: duration,
+        location: location,
+      );
+
+      await ApiService().exams.examSchedulesPost(req);
+      // No specific provider to invalidate unless we cache schedules globally,
+      // but the UI calling this usually updates its local state or refetches.
     });
   }
 }

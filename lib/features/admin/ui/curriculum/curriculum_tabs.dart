@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart'; // Added for date formatting
+import 'package:intl/intl.dart';
 import 'package:admin_api/api.dart' as admin;
 
 import '../../providers/curriculum_providers.dart';
-import 'curriculum_dialogs.dart'; // Ensure this matches the file name from the previous step
+import 'curriculum_dialogs.dart';
+
+import 'semester_planning_page.dart';
+import 'exams_planning_page.dart';
 
 // ==========================================
 // STYLING HELPERS
@@ -120,7 +123,9 @@ class SemestersExamsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 1. Watch both Semester and Exam Season
     final activeSemAsync = ref.watch(activeSemesterProvider);
+    final activeExamAsync = ref.watch(activeExamSeasonProvider);
     final programsAsync = ref.watch(programsProvider);
 
     final screenWidth = MediaQuery.of(context).size.width;
@@ -130,7 +135,12 @@ class SemestersExamsTab extends ConsumerWidget {
       loading: () => const Center(child: LinearProgressIndicator()),
       error: (e, _) => Center(child: Text("Error: $e")),
       data: (activeSemester) {
-        final hasActive = activeSemester != null;
+        final hasActiveSemester = activeSemester != null;
+
+        // Resolve the exam season state
+        // We only care about the data if a semester exists
+        final activeExamSeason = activeExamAsync.valueOrNull;
+        final isExamMode = activeExamSeason != null && hasActiveSemester;
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(isMobile ? 16 : 24),
@@ -143,32 +153,56 @@ class SemestersExamsTab extends ConsumerWidget {
                 padding: EdgeInsets.all(isMobile ? 20 : 24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: hasActive
-                        ? [Colors.blue.shade800, Colors.blue.shade600]
-                        : [Colors.grey.shade800, Colors.grey.shade700],
+                    colors: _getGradientColors(hasActiveSemester, isExamMode),
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: (hasActive ? Colors.blue : Colors.grey)
+                      color: (hasActiveSemester
+                          ? (isExamMode ? Colors.red : Colors.blue)
+                          : Colors.grey)
                           .withOpacity(0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-                child: !hasActive
+                child: !hasActiveSemester
                     ? _buildInactiveState(context, isMobile)
-                    : _buildActiveState(context, ref, activeSemester, isMobile),
+                    : _buildActiveState(
+                  context,
+                  ref,
+                  activeSemester,
+                  activeExamSeason, // Pass the exam season
+                  isMobile,
+                ),
               ),
 
               const SizedBox(height: 32),
 
-              const Text(
-                "Logistics & Timetables",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isExamMode ? "Exam Schedules" : "Logistics & Timetables",
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  if (isExamMode)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.red.shade200)
+                      ),
+                      child: Text(
+                          "READ-ONLY MODE",
+                          style: TextStyle(fontSize: 10, color: Colors.red.shade800, fontWeight: FontWeight.bold)
+                      ),
+                    )
+                ],
               ),
               const SizedBox(height: 16),
 
@@ -176,14 +210,24 @@ class SemestersExamsTab extends ConsumerWidget {
                 loading: () => const LinearProgressIndicator(),
                 error: (_, __) => const Text("Error loading programs"),
                 data: (programs) {
-                  if (programs.isEmpty)
+                  if (programs.isEmpty) {
                     return const Text("No programs defined yet.");
+                  }
+
+                  if (activeSemester == null) {
+                    return const Text("Start a semester to view timetables.");
+                  }
+
                   return ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: programs.length,
-                    itemBuilder: (context, index) =>
-                        _buildProgramCard(context, programs[index]),
+                    itemBuilder: (context, index) => _buildProgramCard(
+                      context,
+                      programs[index],
+                      activeSemester,
+                      activeExamSeason, // Pass for navigation logic
+                    ),
                   );
                 },
               ),
@@ -194,12 +238,15 @@ class SemestersExamsTab extends ConsumerWidget {
     );
   }
 
+  // --- BUILDERS ---
+
   Widget _buildActiveState(
-    BuildContext context,
-    WidgetRef ref,
-    admin.Semester semester,
-    bool isMobile,
-  ) {
+      BuildContext context,
+      WidgetRef ref,
+      admin.Semester semester,
+      admin.ExamSeason? examSeason,
+      bool isMobile,
+      ) {
     DateTime? startDate;
     try {
       if (semester.startDate is DateTime) {
@@ -220,9 +267,10 @@ class SemestersExamsTab extends ConsumerWidget {
         ? "2"
         : "1";
 
+    final isExamMode = examSeason != null;
+
     return Column(
       children: [
-        // Layout flips to vertical on very small screens if necessary
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,14 +279,20 @@ class SemestersExamsTab extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildStatusBadge("In Progress", Colors.greenAccent.shade400),
+                  // 1. Status Badge
+                  _buildStatusBadge(
+                      isExamMode ? "EXAM PERIOD" : "IN PROGRESS",
+                      isExamMode ? Colors.redAccent : Colors.greenAccent.shade400
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     "${semester.academicYear ?? 'N/A'}",
                     style: TextStyle(color: Colors.blue.shade50, fontSize: 14),
                   ),
                   Text(
-                    "Semester $semNumDisplay",
+                    isExamMode
+                        ? (examSeason.name ?? "Exams")
+                        : "Semester $semNumDisplay",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isMobile ? 22 : 26,
@@ -247,68 +301,102 @@ class SemestersExamsTab extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    progress['status'] as String,
+                    isExamMode
+                        ? "Grading portals are open for lecturers."
+                        : progress['status'] as String,
                     style: TextStyle(color: Colors.blue.shade100, fontSize: 13),
                   ),
                 ],
               ),
             ),
-            _buildWeekDisplay(progress['current'], progress['total'], isMobile),
+            // Hide week display during exams to reduce clutter, or keep it if you prefer
+            if (!isExamMode)
+              _buildWeekDisplay(progress['current'], progress['total'], isMobile),
           ],
         ),
         const SizedBox(height: 24),
-        _buildActionButtons(context, ref, semester.publicId, isMobile),
+        _buildActionButtons(context, ref, semester.publicId, examSeason, isMobile),
       ],
     );
   }
 
   Widget _buildActionButtons(
-    BuildContext context,
-    WidgetRef ref,
-    String? semId,
-    bool isMobile,
-  ) {
-    // Buttons stack on mobile to prevent text clipping
-    final buttons = [
-      Expanded(
-        flex: isMobile ? 0 : 1,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => const AddExamSeasonDialog(),
-            );
-          },
-          icon: const Icon(Icons.assignment_rounded, size: 18),
-          label: const Text("Start Exams"),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.blue.shade900,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+      BuildContext context,
+      WidgetRef ref,
+      String? semId,
+      admin.ExamSeason? examSeason,
+      bool isMobile,
+      ) {
+    final isExamMode = examSeason != null;
+    final buttons = <Widget>[];
+
+    if (isExamMode) {
+      // --- EXAM MODE ACTIONS ---
+      // Only "End Exams" is shown (prominently)
+      buttons.add(
+        Expanded(
+          flex: isMobile ? 0 : 1,
+          child: ElevatedButton.icon(
+            onPressed: () => _confirmEndExams(context, ref, examSeason.publicId),
+            icon: const Icon(Icons.stop_circle_outlined, size: 18),
+            label: const Text("End Exams"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.red.shade900,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
           ),
         ),
-      ),
-      SizedBox(width: isMobile ? 0 : 12, height: isMobile ? 12 : 0),
-      Expanded(
-        flex: isMobile ? 0 : 1,
-        child: OutlinedButton.icon(
-          onPressed: () => _confirmEndSemester(context, ref, semId),
-          icon: const Icon(Icons.power_settings_new_rounded, size: 18),
-          label: const Text("End Semester"),
-          style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.red.shade100,
-            side: BorderSide(color: Colors.red.shade200),
-            padding: const EdgeInsets.symmetric(vertical: 14),
+      );
+    } else {
+      // --- NORMAL SEMESTER ACTIONS ---
+      // 1. Start Exams
+      buttons.add(
+        Expanded(
+          flex: isMobile ? 0 : 1,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => const AddExamSeasonDialog(),
+              );
+            },
+            icon: const Icon(Icons.assignment_rounded, size: 18),
+            label: const Text("Start Exams"),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.blue.shade900,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
           ),
         ),
-      ),
-    ];
+      );
+
+      buttons.add(SizedBox(width: isMobile ? 0 : 12, height: isMobile ? 12 : 0));
+
+      // 2. End Semester
+      buttons.add(
+        Expanded(
+          flex: isMobile ? 0 : 1,
+          child: OutlinedButton.icon(
+            onPressed: () => _confirmEndSemester(context, ref, semId),
+            icon: const Icon(Icons.power_settings_new_rounded, size: 18),
+            label: const Text("End Semester"),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red.shade100,
+              side: BorderSide(color: Colors.red.shade200),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+            ),
+          ),
+        ),
+      );
+    }
 
     return isMobile
         ? Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: buttons,
-          )
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: buttons,
+    )
         : Row(children: buttons);
   }
 
@@ -393,7 +481,135 @@ class SemestersExamsTab extends ConsumerWidget {
     );
   }
 
+  Widget _buildProgramCard(
+      BuildContext context,
+      admin.Program p,
+      admin.Semester activeSemester,
+      admin.ExamSeason? examSeason, // Added
+      ) {
+
+    final isExamMode = examSeason != null;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: isExamMode ? Colors.red.shade50 : Colors.blue.shade50,
+          child: Icon(
+            isExamMode ? Icons.assignment_late_outlined : Icons.school_outlined,
+            color: isExamMode ? Colors.red.shade700 : Colors.blue.shade700,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          p.name ?? "Unknown Program",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(isExamMode ? "View Exam Schedule" : (p.code ?? 'No Code')),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 14,
+          color: Colors.grey,
+        ),
+        onTap: () {
+          // LOGIC BRANCHING FOR NAVIGATION
+          if (isExamMode) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ExamsPlanningPage(
+                  program: p,
+                  activeSemester: activeSemester,
+                  activeSeason: examSeason!,
+                ),
+              ),
+            );
+          } else {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SemesterPlanningPage(
+                  program: p,
+                  activeSemester: activeSemester,
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  // --- ACTIONS ---
+
+  void _confirmEndSemester(BuildContext context, WidgetRef ref, String? semesterId) {
+    if (semesterId == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("End Current Semester?"),
+        content: const Text(
+          "This action will deactivate the current semester. It cannot be undone easily. Proceed?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(curriculumControllerProvider.notifier).endSemester(semesterId);
+            },
+            child: const Text("End Semester", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmEndExams(BuildContext context, WidgetRef ref, String? examSeasonId) {
+    if (examSeasonId == null) return;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("End Exam Season?"),
+        content: const Text(
+          "This will close the grading portals and finish the exam period. The semester will remain active for final wrapping up.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(curriculumControllerProvider.notifier).endExamSession(examSeasonId);
+            },
+            child: const Text("End Exams", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // --- HELPERS ---
+
+  List<Color> _getGradientColors(bool hasActive, bool isExamMode) {
+    if (!hasActive) {
+      return [Colors.grey.shade800, Colors.grey.shade700];
+    }
+    if (isExamMode) {
+      return [Colors.red.shade800, Colors.red.shade600];
+    }
+    return [Colors.blue.shade800, Colors.blue.shade600];
+  }
 
   Widget _buildStatusBadge(String text, Color color) {
     return Container(
@@ -414,96 +630,16 @@ class SemestersExamsTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildProgramCard(BuildContext context, admin.Program p) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.blue.shade50,
-          child: Icon(
-            Icons.school_outlined,
-            color: Colors.blue.shade700,
-            size: 20,
-          ),
-        ),
-        title: Text(
-          p.name ?? "Unknown Program",
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(p.code ?? 'No Code'),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 14,
-          color: Colors.grey,
-        ),
-          onTap: () {
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text(
-                  "Semester planning page in progress",
-                  style: TextStyle(color: Colors.white),
-                ),
-                backgroundColor: Colors.black,
-                behavior: SnackBarBehavior.floating,
-                duration: Duration(seconds: 3),
-              ),
-            );
-          },
-      ),
-    );
-  }
-
-  void _confirmEndSemester(
-    BuildContext context,
-    WidgetRef ref,
-    String? semesterId,
-  ) {
-    if (semesterId == null) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("End Current Semester?"),
-        content: const Text(
-          "This action will deactivate the current semester. It cannot be undone easily. Proceed?",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () async {
-              Navigator.pop(ctx);
-               await ref.read(curriculumControllerProvider.notifier).endSemester(semesterId);
-            },
-            child: const Text(
-              "End Semester",
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Map<String, dynamic> _calculateSemesterProgress(
-    DateTime? startDate,
-    int? lengthWeeks,
-  ) {
+      DateTime? startDate,
+      int? lengthWeeks,
+      ) {
     if (startDate == null || lengthWeeks == null || lengthWeeks == 0) {
       return {"current": 0, "total": lengthWeeks ?? 0, "status": "Not Started"};
     }
 
     final now = DateTime.now();
     final difference = now.difference(startDate).inDays;
-
     int currentWeek = (difference / 7).ceil();
 
     if (currentWeek < 1) {
@@ -521,7 +657,6 @@ class SemestersExamsTab extends ConsumerWidget {
     return {"current": currentWeek, "total": lengthWeeks, "status": status};
   }
 }
-
 // ==========================================
 // 2. PROGRAMS TAB
 // ==========================================

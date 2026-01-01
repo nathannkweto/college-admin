@@ -7,9 +7,9 @@ info:
     name: Backend Team
 
 servers:
-  - url: https://api.college.edu/v1/admin
+  - url: https://api.college.edu/api/v1/admin
     description: Production Server
-  - url: http://localhost:8000/api/admin
+  - url: http://localhost:8000/api/v1/admin
     description: Local Development
 
 components:
@@ -142,6 +142,15 @@ components:
           properties:
             semester_sequence:
               type: integer
+            lecturer:
+              type: object
+              nullable: true  # Important: Not all courses will have a lecturer assigned
+              properties:
+                public_id:
+                  type: string
+                  format: uuid
+                name:
+                  type: string
 
     Semester:
       type: object
@@ -189,6 +198,55 @@ components:
         location:
           type: string
 
+    # --- EXAM SEASON SCHEMA ---
+    ExamSeason:
+      type: object
+      properties:
+        public_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        semester:
+          $ref: "#/components/schemas/Department"
+
+    ExamPaperRequest:
+      type: object
+      required:
+        - season_public_id
+        - course_public_id
+        - program_public_id
+        - date
+        - start_time
+        - duration_minutes
+        - location
+      properties:
+        season_public_id:
+          type: string
+          format: uuid
+        course_public_id:
+          type: string
+          format: uuid
+        program_public_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+          example: "09:00"
+        duration_minutes:
+          type: integer
+        location:
+          type: string
+
     CourseResult:
       type: object
       properties:
@@ -196,12 +254,6 @@ components:
           type: string
         course_code:
           type: string
-        ca_score:
-          type: number
-          format: float
-        exam_score:
-          type: number
-          format: float
         total_score:
           type: number
           format: float
@@ -209,7 +261,7 @@ components:
           type: string
         status:
           type: string
-          enum: [PASS, FAIL, SUPPLIMENTARY]
+          enum: [ PASS, FAIL ]
 
     StudentTranscript:
       type: object
@@ -234,6 +286,7 @@ components:
           format: uuid
         student_id:
           type: string
+          description: "The readable ID, e.g., STU-001"
         first_name:
           type: string
         last_name:
@@ -245,7 +298,35 @@ components:
           format: float
         semester_decision:
           type: string
-          enum: [PROMOTED, REPEAT, DISMISSED]
+          enum: [ PROMOTED, REPEAT, DISMISSED, NO_RESULTS ]
+        status:
+          type: string
+          description: "Complete if all marks are in, Pending otherwise"
+          enum: [ Complete, Pending ]
+
+    ResultsPublishPostRequest:
+      type: object
+      required: [ program_public_id, semester_public_id, action ]
+      properties:
+        program_public_id:
+          type: string
+          format: uuid
+        semester_public_id:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [ PUBLISH, UNPUBLISH ]
+
+    ProgramResultsResponse:
+      type: object
+      properties:
+        is_published:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentResultSummary"
 
     Student:
       type: object
@@ -324,22 +405,20 @@ components:
         public_id:
           type: string
           format: uuid
-        exam_season_public_id:
-          type: string
-          format: uuid
-        course_public_id:
-          type: string
-          format: uuid
         date:
           type: string
           format: date
         start_time:
           type: string
-          format: time
+          example: "09:00:00"
         duration_minutes:
           type: integer
         location:
           type: string
+        course:
+          $ref: "#/components/schemas/Course"
+        program:
+          $ref: "#/components/schemas/Program"
 
     FinanceFee:
       type: object
@@ -565,7 +644,7 @@ paths:
 
   /programs/{public_id}/courses:
     get:
-      tags: [Academics]
+      tags: [ Academics ]
       operationId: programsCoursesGet
       parameters:
         - name: public_id
@@ -588,7 +667,7 @@ paths:
                       $ref: "#/components/schemas/ProgramCourse"
 
     post:
-      tags: [Academics]
+      tags: [ Academics ]
       operationId: programsCoursesPost
       parameters:
         - name: public_id
@@ -603,20 +682,25 @@ paths:
           application/json:
             schema:
               type: object
-              required: [course_public_id, semester_sequence]
+              required: [ course_public_id, semester_sequence ]
               properties:
                 course_public_id:
                   type: string
                   format: uuid
                 semester_sequence:
                   type: integer
+                lecturer_public_id: # <--- NEW FIELD
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: "Optional: Assign a default lecturer for this course in this program."
       responses:
         "200":
           description: Linked
 
   /programs/{public_id}/courses/{course_public_id}:
     delete:
-      tags: [Academics]
+      tags: [ Academics ]
       operationId: programsCoursesDelete
       parameters:
         - name: public_id
@@ -1048,8 +1132,25 @@ paths:
 
   # --- EXAMS ---
   /exams/seasons:
+    get:
+      tags: [ Exams ]
+      summary: List all exam seasons
+      operationId: examSeasonsList
+      responses:
+        "200":
+          description: List of all exam seasons
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ExamSeason"
     post:
       tags: [ Exams ]
+      summary: Create a new exam season
       operationId: examSeasonsPost
       requestBody:
         required: true
@@ -1061,23 +1162,102 @@ paths:
               properties:
                 name:
                   type: string
+                  example: "Finals 2025"
                 semester_public_id:
                   type: string
                   format: uuid
       responses:
         "201":
           description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ExamSeason"
 
-  /exams/schedules:
+  /exams/seasons/active:
+    get:
+      tags: [ Exams ]
+      summary: Get the currently active exam season
+      operationId: examSeasonsActive
+      responses:
+        "200":
+          description: Returns the active season or null
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/ExamSeason"
+
+  /exams/seasons/{public_id}/end:
     post:
       tags: [ Exams ]
+      summary: End a specific exam season (set is_active to false)
+      operationId: examSeasonsEnd
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Season ended successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/ExamSeason"
+
+  /exams/schedules:
+    get:
+      tags: [ Exams ]
+      summary: Get exam schedules for a specific program and season
+      operationId: examSchedulesList
+      parameters:
+        - name: program_public_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: season_public_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of scheduled exams
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ExamPaper"
+    post:
+      tags: [ Exams ]
+      summary: Schedule an exam paper
       operationId: examSchedulesPost
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ExamPaper"
+              $ref: "#/components/schemas/ExamPaperRequest"
       responses:
         "201":
           description: Created
@@ -1238,14 +1418,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  is_published:
-                    type: boolean
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/StudentResultSummary"
+                $ref: "#/components/schemas/ProgramResultsResponse"
 
   /results/student-transcript:
     get:
@@ -1283,18 +1456,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [ program_public_id, semester_public_id, action ]
-              properties:
-                program_public_id:
-                  type: string
-                  format: uuid
-                semester_public_id:
-                  type: string
-                  format: uuid
-                action:
-                  type: string
-                  enum: [ PUBLISH, UNPUBLISH ]
+              $ref: "#/components/schemas/ResultsPublishPostRequest"
       responses:
         "200":
           description: OK
@@ -1304,6 +1466,4 @@ paths:
                 type: object
                 properties:
                   message:
-                    type: string
-                  status:
                     type: string

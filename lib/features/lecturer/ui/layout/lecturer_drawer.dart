@@ -57,13 +57,8 @@ class LecturerDrawer extends ConsumerWidget {
               physics: const ClampingScrollPhysics(),
               children: [
                 _buildNavItem(0, "Home", Icons.home, isMobile),
-                _buildNavItem(1, "Courses", Icons.book_outlined, isMobile),
-                _buildNavItem(
-                  2,
-                  "Grading",
-                  Icons.grade_outlined,
-                  isMobile,
-                ),
+                //_buildNavItem(1, "Courses", Icons.book_outlined, isMobile),
+                //_buildNavItem(2, "Grading", Icons.grade_outlined, isMobile),
               ],
             ),
           ),

@@ -473,56 +473,96 @@ class AddCourseToCurriculumDialog extends ConsumerStatefulWidget {
 class _AddCourseToCurriculumDialogState
     extends ConsumerState<AddCourseToCurriculumDialog> {
   String? _selectedCourseId;
+  String? _selectedLecturerId; // <--- NEW STATE VARIABLE
 
   @override
   Widget build(BuildContext context) {
-    // Watch the global course list
+    // Watch both providers
     final coursesAsync = ref.watch(coursesProvider);
+    final lecturersAsync = ref.watch(lecturersProvider); // <--- NEW WATCH
 
     return AlertDialog(
-      shape: _dialogShape, // Assumes this variable exists in your file
+      shape: _dialogShape,
       title: Text(
         "Assign Course to Sem ${widget.semesterSeq}",
         style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       content: SizedBox(
         width: 400,
-        child: coursesAsync.when(
-          loading: () => const SizedBox(
-            height: 100,
-            child: Center(child: CircularProgressIndicator()),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Select a course and optionally assign a default lecturer.",
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 20),
+
+              // 1. COURSE SELECTION
+              coursesAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text("Error loading courses: $e"),
+                data: (courses) {
+                  final validCourses = courses.where((c) => c.publicId != null).toList();
+
+                  if (validCourses.isEmpty) {
+                    return const Text("No courses available to assign.");
+                  }
+
+                  return DropdownButtonFormField<String>(
+                    value: _selectedCourseId,
+                    isExpanded: true,
+                    decoration: _buildInputDeco("Select Course", Icons.book),
+                    hint: const Text("Choose a course..."),
+                    items: validCourses.map((c) {
+                      return DropdownMenuItem(
+                        value: c.publicId,
+                        child: Text(
+                          "${c.code ?? 'No Code'} - ${c.name ?? 'Unnamed'}",
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (v) => setState(() => _selectedCourseId = v),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // 2. LECTURER SELECTION (NEW)
+              lecturersAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text("Error loading lecturers: $e"),
+                data: (lecturers) {
+                  return DropdownButtonFormField<String>(
+                    value: _selectedLecturerId,
+                    isExpanded: true,
+                    decoration: _buildInputDeco("Default Lecturer (Optional)", Icons.person),
+                    hint: const Text("Select a lecturer..."),
+                    items: [
+                      // Option to unselect lecturer
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text("No Default Lecturer"),
+                      ),
+                      ...lecturers.map((l) {
+                        return DropdownMenuItem(
+                          value: l.publicId,
+                          child: Text(
+                            "${l.title ?? ''} ${l.firstName} ${l.lastName}",
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }),
+                    ],
+                    onChanged: (v) => setState(() => _selectedLecturerId = v),
+                  );
+                },
+              ),
+            ],
           ),
-          error: (e, _) => Text("Error loading courses: $e"),
-          data: (courses) {
-            // Safety: Filter out courses with null IDs to prevent Dropdown crash
-            final validCourses = courses.where((c) => c.publicId != null).toList();
-
-            if (validCourses.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text("No courses available to assign."),
-              );
-            }
-
-            return DropdownButtonFormField<String>(
-              value: _selectedCourseId,
-              isExpanded: true,
-              decoration: _buildInputDeco("Select Course", Icons.search),
-              hint: const Text("Choose a course..."),
-              items: validCourses
-                  .map(
-                    (c) => DropdownMenuItem(
-                  value: c.publicId,
-                  child: Text(
-                    "${c.code ?? 'No Code'} - ${c.name ?? 'Unnamed'}",
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              )
-                  .toList(),
-              onChanged: (v) => setState(() => _selectedCourseId = v),
-            );
-          },
         ),
       ),
       actionsPadding: const EdgeInsets.all(20),
@@ -542,6 +582,7 @@ class _AddCourseToCurriculumDialogState
               widget.programId,
               _selectedCourseId!,
               widget.semesterSeq,
+              lecturerId: _selectedLecturerId, // <--- PASSING THE LECTURER
             );
             if (success && mounted) Navigator.pop(context);
           },
@@ -732,116 +773,160 @@ class AddExamSeasonDialog extends ConsumerStatefulWidget {
   const AddExamSeasonDialog({super.key});
 
   @override
-  ConsumerState<AddExamSeasonDialog> createState() =>
-      _AddExamSeasonDialogState();
+  ConsumerState<AddExamSeasonDialog> createState() => _AddExamSeasonDialogState();
 }
 
 class _AddExamSeasonDialogState extends ConsumerState<AddExamSeasonDialog> {
-  final _nameCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+
+  // To handle the loading state of the button
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit(String semesterPublicId) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    // Call the updated controller method
+    final success = await ref
+        .read(curriculumControllerProvider.notifier)
+        .addExamSeason(_nameController.text.trim(), semesterPublicId);
+
+    if (mounted) {
+      setState(() => _isSubmitting = false);
+
+      if (success) {
+        Navigator.of(context).pop(); // Close dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Exam Season started successfully!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // Error handling is usually done via print/logging in the provider,
+        // but you can add a generic error snackbar here if needed.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Failed to start exam season. Check connection."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // We need the active semester ID to link the exam season to it
     final activeSemAsync = ref.watch(activeSemesterProvider);
 
-    return AlertDialog(
-      shape: _dialogShape,
-      title: const Text(
-        "Create Exam Season",
-        style: TextStyle(fontWeight: FontWeight.bold),
+    return activeSemAsync.when(
+      loading: () => const AlertDialog(
+        content: SizedBox(
+            height: 100,
+            child: Center(child: CircularProgressIndicator())
+        ),
       ),
-      content: SizedBox(
-        width: 400,
-        child: activeSemAsync.when(
-          loading: () => const LinearProgressIndicator(),
-          error: (e, _) => Text("Error: $e"),
-          data: (semester) {
-            if (semester == null) {
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.warning_amber, color: Colors.orange),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        "No active semester found. Please start a semester first.",
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
+      error: (e, stack) => AlertDialog(
+        title: const Text("Error"),
+        content: Text("Could not verify active semester: $e"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Close"),
+          ),
+        ],
+      ),
+      data: (semester) {
+        if (semester == null) {
+          return AlertDialog(
+            title: const Text("No Active Semester"),
+            content: const Text("You cannot start an exam season without an active semester."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Close"),
+              ),
+            ],
+          );
+        }
 
-            return Column(
+        // Auto-fill a suggestion if empty (Optional UX enhancement)
+        if (_nameController.text.isEmpty) {
+          _nameController.text = "Finals ${semester.academicYear ?? ''}";
+        }
+
+        return AlertDialog(
+          title: const Text("Start Exam Season"),
+          content: Form(
+            key: _formKey,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Colors.blue.shade700,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        "Active Semester: ${semester.academicYear}",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue.shade800,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
+                Text(
+                  "Semester: ${semester.academicYear} (Sem ${semester.semesterNumber})",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
+                const Text(
+                  "This will activate 'Exam Mode' for the current semester. "
+                      "Lecturers will be able to submit grades.",
+                  style: TextStyle(fontSize: 13, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
-                  controller: _nameCtrl,
-                  decoration: _buildInputDeco(
-                    "Season Name",
-                    Icons.event_note,
-                  ).copyWith(hintText: "e.g. Fall Finals 2024"),
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: "Season Name",
+                    hintText: "e.g., Finals 2025, Mid-Terms",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a name';
+                    }
+                    return null;
+                  },
                 ),
               ],
-            );
-          },
-        ),
-      ),
-      actionsPadding: const EdgeInsets.all(20),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600)),
-        ),
-        if (activeSemAsync.value != null)
-          ElevatedButton(
-            style: _primaryBtnStyle,
-            onPressed: () async {
-              if (_nameCtrl.text.isNotEmpty) {
-                final semId = activeSemAsync.value!.publicId!;
-                final success = await ref
-                    .read(curriculumControllerProvider.notifier)
-                    .addExamSeason(_nameCtrl.text, semId);
-                if (success && mounted) Navigator.pop(context);
-              }
-            },
-            child: const Text("Create Exams"),
+            ),
           ),
-      ],
+          actions: [
+            TextButton(
+              onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: _isSubmitting
+                  ? null
+                  : () => _submit(semester.publicId ?? "NULL"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade800,
+                foregroundColor: Colors.white,
+              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+                  : const Text("Start Exams"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -855,14 +940,13 @@ class ProgramCurriculumDialog extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch specific curriculum for this program
     final curriculumAsync = ref.watch(curriculumProvider(program.publicId!));
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 600,
-        height: 700,
+        width: 700, // Slightly wider to accommodate lecturer names
+        height: 800,
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -901,9 +985,6 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text("Error: $e")),
                 data: (courses) {
-                  // NOTE: Ensure your API client generates 'ProgramCourse' correctly.
-                  // If it returns a standard 'Course' with a 'pivot' property, this cast is valid.
-                  // We add a safety check just in case.
                   final safeCourses = courses.whereType<admin.ProgramCourse>().toList();
 
                   return ListView.separated(
@@ -912,6 +993,7 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                     itemBuilder: (ctx, i) {
                       final semSeq = i + 1;
 
+                      // Filter courses for this specific semester
                       final semesterCourses = safeCourses.where((c) {
                         return c.pivot?.semesterSequence == semSeq;
                       }).toList();
@@ -923,6 +1005,7 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                         ),
                         child: Column(
                           children: [
+                            // Semester Header
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -935,8 +1018,7 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                 ),
                               ),
                               child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     "Semester $semSeq",
@@ -948,11 +1030,10 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                     onPressed: () {
                                       showDialog(
                                         context: context,
-                                        builder: (_) =>
-                                            AddCourseToCurriculumDialog(
-                                              programId: program.publicId!,
-                                              semesterSeq: semSeq,
-                                            ),
+                                        builder: (_) => AddCourseToCurriculumDialog(
+                                          programId: program.publicId!,
+                                          semesterSeq: semSeq,
+                                        ),
                                       );
                                     },
                                     icon: const Icon(Icons.add, size: 16),
@@ -964,6 +1045,8 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                 ],
                               ),
                             ),
+
+                            // Course List for this Semester
                             if (semesterCourses.isEmpty)
                               const Padding(
                                 padding: EdgeInsets.all(16.0),
@@ -977,12 +1060,64 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                 ),
                               )
                             else
-                              ...semesterCourses.map(
-                                    (c) => ListTile(
+                              ...semesterCourses.map((c) {
+                                // Extract Lecturer Name safely
+                                final lecturerName = c.pivot?.lecturer?.name;
+
+                                return ListTile(
                                   dense: true,
+                                  leading: CircleAvatar(
+                                    backgroundColor: Colors.blue.shade50,
+                                    child: Text(
+                                      (c.code ?? "??").substring(0, 2),
+                                      style: TextStyle(
+                                          color: Colors.blue.shade800,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold
+                                      ),
+                                    ),
+                                  ),
                                   title: Text(c.name ?? '-'),
-                                  subtitle: Text(c.code ?? '-'),
+                                  subtitle: Row(
+                                    children: [
+                                      // Course Code
+                                      Text(
+                                        c.code ?? '-',
+                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                      ),
+                                      if (lecturerName != null) ...[
+                                        const SizedBox(width: 8),
+                                        const Text("•"),
+                                        const SizedBox(width: 8),
+                                        // Lecturer Badge
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                              color: Colors.amber.shade50,
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border.all(color: Colors.amber.shade200)
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.person, size: 12, color: Colors.amber.shade800),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                lecturerName,
+                                                style: TextStyle(
+                                                    fontSize: 11,
+                                                    color: Colors.amber.shade900,
+                                                    fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ]
+                                    ],
+                                  ),
                                   trailing: IconButton(
+                                    tooltip: "Remove from curriculum",
                                     icon: const Icon(
                                       Icons.remove_circle_outline,
                                       color: Colors.redAccent,
@@ -990,11 +1125,7 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                     ),
                                     onPressed: () {
                                       if (c.publicId != null) {
-                                        ref
-                                            .read(
-                                          curriculumControllerProvider
-                                              .notifier,
-                                        )
+                                        ref.read(curriculumControllerProvider.notifier)
                                             .removeCourseFromProgram(
                                           program.publicId!,
                                           c.publicId!,
@@ -1002,8 +1133,8 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                       }
                                     },
                                   ),
-                                ),
-                              ),
+                                );
+                              }),
                           ],
                         ),
                       );

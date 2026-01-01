@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'layout/lecturer_drawer.dart';
 import 'dashboard/dashboard_page.dart';
-import 'courses/lecturer_courses_page.dart';
-import 'grading/lecturer_grading_page.dart';
+import 'grading/grading_page.dart';
 
 class LecturerLayout extends StatefulWidget {
   const LecturerLayout({super.key});
@@ -29,12 +28,6 @@ class _LecturerLayoutState extends State<LecturerLayout> {
     switch (_selectedIndex) {
       case 0:
         content = const LecturerDashboard();
-        break;
-      case 1:
-        content = const LecturerCoursesPage();
-        break;
-      case 2:
-        content = const LecturerGradingPage();
         break;
       default:
         content = const LecturerDashboard();

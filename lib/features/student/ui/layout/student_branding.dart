@@ -68,7 +68,7 @@ class _LogoIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'assets/icons/logo.jpg',
+      'assets/images/logo.png',
       height: 50,
       fit: BoxFit.contain,
     );

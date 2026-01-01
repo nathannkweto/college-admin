@@ -1,8 +1,11 @@
 openapi: 3.0.3
 info:
   title: Auth API
-  x-pub-name: core_api
   version: 1.0.0
+
+  servers:
+    - url: https://api.college.edu/api/v1/auth
+
 paths:
   /auth/login:
     post:
@@ -24,7 +27,6 @@ paths:
 
 components:
   schemas:
-    # 1. Define the User Model explicitly so Dart creates a 'User' class
     User:
       type: object
       properties:
@@ -37,7 +39,6 @@ components:
           type: string
           enum: [ADMIN, STUDENT, LECTURER]
 
-    # 2. Define the Request explicitly
     LoginRequest:
       type: object
       required:
@@ -49,7 +50,6 @@ components:
         password:
           type: string
 
-    # 3. Define the Response Wrapper
     LoginResponse:
       type: object
       properties:
