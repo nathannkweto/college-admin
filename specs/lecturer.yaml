@@ -30,8 +30,6 @@ paths:
       summary: Get Weekly Schedule
       description: Returns the lecturer's timetable for the currently active semester, grouped by day.
       operationId: lecturerScheduleGet
-      tags:
-        - Lecturer
       responses:
         "200":
           description: Successful response
