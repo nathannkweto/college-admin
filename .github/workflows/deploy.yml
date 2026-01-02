@@ -1,8 +1,10 @@
-name: Deploy to GitHub Pages
+name: Deploy Web App
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - dev
 permissions:
   contents: write
 
@@ -10,8 +12,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    outputs:
+      artifact-name: web-build
+
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: subosito/flutter-action@v2
         with:
@@ -57,7 +62,6 @@ jobs:
             -c specs/lecturer-config.yaml
 
       # 4. Install dependencies
-      # We use --melos or individual gets if they are local path dependencies
       - name: Install dependencies
         run: flutter pub get
 
@@ -69,8 +73,54 @@ jobs:
             --dart-define=API_URL=${{ secrets.API_URL }} \
             --dart-define=ENV=production
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build/web
+          name: web-build
+          path: build/web
+
+  deploy-production:
+    needs: build
+    if: github.ref_name == 'master'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+
+      - name: Deploy to Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          password: ${{ secrets.HOSTINGER_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          local-dir: build/web/
+          server-dir: public_html/
+
+  deploy-testing:
+    needs: build
+    if: github.ref_name == 'dev'
+    runs-on: ubuntu-latest
+    environment: testing
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: build/web
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - uses: actions/deploy-pages@v4
