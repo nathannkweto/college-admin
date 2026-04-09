@@ -1,0 +1,745 @@
+openapi: 3.0.3
+info:
+  title: Admin API
+  description:
+    Full administrative control panel for the College Management System.
+    Backend API aligned with Laravel models, controllers, and database schema,later to be updated.
+  version: 1.0.0
+
+servers:
+  - url: https://api.matemcollege.com/api/v1/admin
+    description: Production Server
+  - url: http://localhost:8000/api/v1/admin
+    description: Local Development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+
+schemas:
+  PaginationMeta:
+    type: object
+    properties:
+      current_page:
+        type: integer
+      last_page:
+        type: integer
+      total:
+        type: integer
+      per_page:
+        type: integer
+
+  DashboardMetrics:
+    type: object
+    required:
+      - students
+      - lecturers
+      - programs
+      - levels
+    properties:
+      students:
+        type: integer
+      lecturers:
+        type: integer
+      programs:
+        type: integer
+      levels:
+        type: integer
+
+  DashboardFinance:
+    type: object
+    required:
+      - income
+      - expenses
+      - net_balance
+    properties:
+      income:
+        type: number
+        format: double
+      expenses:
+        type: number
+        format: double
+      net_balance:
+        type: number
+        format: double
+      active_semester:
+        type: string
+        nullable: true
+
+  Student:
+    type: object
+    properties:
+      public_id:
+        type: string
+        format: uuid
+      first_name:
+        type: string
+      last_name:
+        type: string
+      national_id_number:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+        enum: [M, F]
+      enrollment_date:
+        type: string
+        format: date
+      dob:
+        type: string
+        format: date
+      address:
+        type: string
+      study_level:
+        type: object
+        properties:
+          public_id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          tag:
+            type: string
+      program:
+        type: object
+        properties:
+          public_id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          tag:
+            type: string
+          program_number:
+            type: integer
+
+  Lecturer:
+    type: object
+    properties:
+      public_id:
+        type: string
+        format: uuid
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      id:
+        type: string
+      email:
+        type: string
+        format: email
+      title:
+        type: string
+        enum: [Mr, Ms, Mrs, Dr, Prof]
+      gender:
+        type: string
+        enum: [M, F]
+      employment_date:
+        type: string
+        format: date
+      department:
+        type: object
+        properties:
+          public_id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          code:
+            type: string
+          department_number:
+            type: integer
+
+  Department:
+    type: object
+    properties:
+      public_id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      code:
+        type: string
+      department_number:
+        type: integer
+
+  Program:
+    type: object
+    properties:
+      public_id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      tag:
+        type: string
+      program_number:
+        type: integer
+      level:
+        type: object
+        properties:
+          public_id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          tag:
+            type: string
+      department:
+        type: object
+        properties:
+          public_id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          code:
+            type: string
+          department_number:
+            type: integer
+
+  Course:
+    type: object
+    properties:
+      public_id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      code:
+        type: integer
+      department:
+        type: object
+        properties:
+          public_id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          code:
+            type: string
+          department_number:
+            type: integer
+
+  # Semester:
+  #   type: object
+  #   properties:
+  #     public_id:
+  #       type: string
+  #       format: uuid
+  #     semester:
+  #       type: integer
+  #     academic_year:
+  #       type: object
+  #       properties:
+  #         public_id:
+  #           type: string
+  #           format: uuid
+  #         name:
+  #           type: string
+
+  # Result:
+  #   type: object
+  #   properties:
+  #     public_id:
+  #       type: string
+  #       format: uuid
+  #     semester_db_id:
+  #       type: integer
+  #     student_db_id:
+  #       type: integer
+  #     course_db_id:
+  #       type: integer
+  #     score:
+  #       type: number
+  #       format: float
+  #     grade:
+  #       type: string
+  #     pass_mark:
+  #       type: number
+  #       format: float
+
+  # Transaction:
+  #   type: object
+  #   properties:
+  #     public_id:
+  #       type: string
+  #       format: uuid
+  #     title:
+  #       type: string
+  #     type:
+  #       type: string
+  #       enum: [income, expense]
+  #     amount:
+  #       type: number
+  #       format: float
+  #     date:
+  #       type: string
+  #       format: date
+  #     note:
+  #       type: string
+  #       nullable: true
+
+  # Fee:
+  #   type: object
+  #   properties:
+  #     public_id:
+  #       type: string
+  #       format: uuid
+  #     student_db_id:
+  #       type: integer
+  #     transaction_db_id:
+  #       type: integer
+  #     status:
+  #       type: string
+  #       enum: [pending, paid]
+  #     transaction:
+  #       type: object
+  #       properties:
+  #         public_id:
+  #           type: string
+  #           format: uuid
+  #         title:
+  #           type: string
+  #         type:
+  #           type: string
+  #           enum: [income, expense]
+  #         amount:
+  #           type: number
+  #           format: float
+  #         date:
+  #           type: string
+  #           format: date
+  #         note:
+  #           type: string
+  #           nullable: true
+
+  # Grading:
+  #   type: object
+  #   properties:
+  #     public_id:
+  #       type: string
+  #       format: uuid
+  #     name:
+  #       type: string
+  #     upper_mark:
+  #       type: number
+  #       format: float
+  #     lower_mark:
+  #       type: number
+  #       format: float
+  #     mention:
+  #       type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  # --- DASHBOARD ---
+  /dashboard/metrics:
+    get:
+      tags: [Dashboard]
+      summary: Get core KPI counts
+      operationId: dashboardMetricsGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/DashboardMetrics"
+
+  /dashboard/finance:
+    get:
+      tags: [Dashboard]
+      summary: Get financial overview
+      operationId: dashboardFinanceGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/DashboardFinance"
+
+  # --- ACADEMICS ---
+  /departments:
+    get:
+      tags: [Academics]
+      operationId: departmentsGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Department"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+    post:
+      tags: [Academics]
+      operationId: departmentsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, code]
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                department_number:
+                  type: integer
+      responses:
+        "201":
+          description: Created
+
+  /programs:
+    get:
+      tags: [Academics]
+      operationId: programsGet
+      parameters:
+        - name: department_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: level_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Program"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+    post:
+      tags: [Academics]
+      operationId: programsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - tag
+                - program_number
+                - level_public_id
+                - department_public_id
+              properties:
+                name:
+                  type: string
+                tag:
+                  type: string
+                program_number:
+                  type: integer
+                department_public_id:
+                  type: string
+                  format: uuid
+                level_public_id:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Created
+
+  /courses:
+    get:
+      tags: [Academics]
+      operationId: coursesGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Course"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+    post:
+      tags: [Academics]
+      operationId: coursesPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, code, department_public_id]
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                department_public_id:
+                  type: string
+                  format: uuid
+      responses:
+        "201":
+          description: Created
+
+  # --- STUDENTS ---
+  /students:
+    get:
+      tags: [Students]
+      operationId: studentsGet
+      parameters:
+        - name: program_public_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Student"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+    post:
+      tags: [Students]
+      operationId: studentsPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - first_name
+                - last_name
+                - email
+                - study_level_public_id
+                - program_public_id
+                - id
+                - gender
+                - enrollment_date
+                - national_id_number
+                - dob
+                - address
+                - phone
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                program_public_id:
+                  type: string
+                  format: uuid
+                study_level_public_id:
+                  type: string
+                  format: uuid
+                gender:
+                  type: string
+                  enum: [M, F]
+                enrollment_date:
+                  type: string
+                  format: date
+                national_id_number:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "201":
+          description: Created
+
+  /students/batch-upload:
+    post:
+      tags: [Students]
+      operationId: studentsBatchUploadPost
+      summary: Upload CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Queued
+
+  # --- LECTURERS ---
+  /lecturers:
+    get:
+      tags: [Lecturers]
+      operationId: lecturersGet
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Lecturer"
+                  meta:
+                    $ref: "#/components/schemas/PaginationMeta"
+
+    post:
+      tags: [Lecturers]
+      operationId: lecturersPost
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - first_name
+                - last_name
+                - phone
+                - email
+                - id
+                - employment_date
+                - department_public_id
+                - title
+                - gender
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                department_public_id:
+                  type: string
+                  format: uuid
+                title:
+                  type: string
+                  enum: [Mr, Ms, Mrs, Dr, Prof]
+                gender:
+                  type: string
+                  enum: [M, F]
+                national_id:
+                  type: string
+                dob:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        "201":
+          description: Created
+
+  /lecturers/batch-upload:
+    post:
+      tags: [Lecturers]
+      operationId: lecturersBatchUploadPost
+      summary: Upload CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Queued
