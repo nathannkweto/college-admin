@@ -32,13 +32,11 @@ final timetableEntriesProvider = FutureProvider.family
     .autoDispose<List<admin.TimetableEntry>, TimetableFilter>((ref, filter) async {
   print("🔄 [Timetable] Fetching for Sem: ${filter.semesterId}...");
   try {
-    // Calling the Generated API
     final result = await ApiService().timetables.logisticsTimetableGet(
       filter.semesterId,
       programPublicId: filter.programId,
     );
 
-    // Return the list of entries
     return result?.data?.toList() ?? [];
   } catch (e) {
     print("🔴 [Timetable] Error: $e");
@@ -64,7 +62,7 @@ class TimetableController extends StateNotifier<AsyncValue<void>> {
     required String programId,
     required String semesterId,
     required String courseId,
-    required String lecturerId, // <--- Added Lecturer
+    // required String lecturerId, <--- REMOVED (Backend resolves this now)
     required String day,
     required String startTime,
     required String endTime,
@@ -72,14 +70,20 @@ class TimetableController extends StateNotifier<AsyncValue<void>> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      print("🚀 Assigning Class: $courseId to $lecturerId at $startTime");
+      print("🚀 Assigning Class: $courseId (Lecturer resolved by backend) at $startTime");
+
+      // Convert String day to Enum
+      final dayEnum = admin.LogisticsTimetablePostRequestDayEnum.values.firstWhere(
+            (e) => e.value == day,
+        orElse: () => throw Exception('Invalid day provided: $day'),
+      );
 
       final req = admin.LogisticsTimetablePostRequest(
         semesterPublicId: semesterId,
         programPublicId: programId,
         coursePublicId: courseId,
-        lecturerPublicId: lecturerId,
-        day: day,
+        // lecturerPublicId: lecturerId, <--- REMOVED
+        day: dayEnum,
         startTime: startTime,
         endTime: endTime,
         location: location,
@@ -102,15 +106,14 @@ class TimetableController extends StateNotifier<AsyncValue<void>> {
   }
 
   Future<bool> removeClass({
-    required String entryId, // You'll need a DELETE endpoint in your API for this
+    required String entryId,
     required String programId,
     required String semesterId,
   }) async {
-    // Placeholder: Assuming you will add a delete endpoint
-    // await ApiService().timetables.logisticsTimetableEntryDelete(entryId);
-
-    // For now, we just print
+    // Placeholder for DELETE logic
     print("🗑️ Removing Class Entry: $entryId");
+
+    // await ApiService().timetables.logisticsTimetableEntryDelete(entryId);
 
     ref.invalidate(timetableEntriesProvider(
       TimetableFilter(semesterId: semesterId, programId: programId),

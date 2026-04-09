@@ -6,30 +6,22 @@ import 'package:lecturer_api/api.dart';
 // --- 1. Basic Profile Provider ---
 final lecturerProfileProvider = FutureProvider<LecturerProfile>((ref) async {
   final api = ApiService().lecturer;
-
-  // The call returns the wrapper class: LecturerProfileGet200Response
   final response = await api.lecturerProfileGet();
 
   if (response == null || response.data == null) {
     throw Exception("Failed to load lecturer profile");
   }
-
-  // Return the actual model stored inside the 'data' property
   return response.data!;
 });
 
 // --- 2. Weekly Schedule Provider ---
 final lecturerScheduleProvider = FutureProvider<List<DailySchedule>>((ref) async {
   final api = ApiService().lecturer;
-
-  // The API returns an object with a 'data' property which is a List<DailySchedule>
   final response = await api.lecturerScheduleGet();
 
   if (response == null || response.data == null) {
     throw Exception("Failed to load schedule");
   }
-
-  // We return the inner list of DailySchedule objects
   return response.data!;
 });
 
@@ -48,6 +40,7 @@ final lecturerCoursesProvider = FutureProvider<List<CourseAssignment>>((ref) asy
 final lecturerCourseDetailsProvider = FutureProvider.family<CourseCohortDetails, String>((ref, coursePublicId) async {
   final api = ApiService().lecturer;
 
+  // This call now returns the object containing 'programCourseId' (int) and 'context.semester'
   final response = await api.lecturerCourseDetailsGet(coursePublicId);
 
   if (response == null) {
@@ -63,10 +56,10 @@ final gradingActionProvider = Provider((ref) {
   return (String coursePublicId, GradeSubmissionBatch batch) async {
     try {
       // POST /courses/{course_public_id}/grades
+      // We still use the UUID for the URL, but the 'batch' body now contains the Integer ID
       await api.lecturerGradesPost(coursePublicId, batch);
 
-      // CRITICAL: Invalidate the provider so that when the user returns
-      // to the page, the "currentGrade" values are updated from the server.
+      // Invalidate the provider so the UI updates with the new "currentGrade" from server
       ref.invalidate(lecturerCourseDetailsProvider(coursePublicId));
 
       return true;

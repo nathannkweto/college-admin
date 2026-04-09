@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'dart:io'; // Needed for File
 import '../../providers/add_student_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
 
 // --- SEAMLESS STYLE HELPER ---
 InputDecoration _decor(String label, {IconData? icon}) => InputDecoration(
@@ -37,27 +39,27 @@ class _AddStudentDialogState extends ConsumerState<AddStudentDialog> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController(); // NEW
-  final _nationalIdController = TextEditingController(); // NEW
-  final _addressController = TextEditingController(); // NEW
+  final _phoneController = TextEditingController();
+  final _nationalIdController = TextEditingController();
+  final _addressController = TextEditingController();
 
   // Date Display Controllers
   final _enrollDateController = TextEditingController();
-  final _dobController = TextEditingController(); // NEW
+  final _dobController = TextEditingController();
 
   // --- STATE VARIABLES ---
-  String? _selectedProgramPublicId;
+  // CHANGED: Now storing Program Code instead of Public ID
+  String? _selectedProgramCode;
   String? _selectedGender;
 
   DateTime _enrollmentDate = DateTime.now();
-  DateTime _dob = DateTime(2000, 1, 1); // Default DOB ~25 years ago
+  DateTime _dob = DateTime(2000, 1, 1);
 
   PlatformFile? _selectedFile;
 
   @override
   void initState() {
     super.initState();
-    // Set initial date text
     _enrollDateController.text = DateFormat('yyyy-MM-dd').format(_enrollmentDate);
     _dobController.text = DateFormat('yyyy-MM-dd').format(_dob);
   }
@@ -109,7 +111,7 @@ class _AddStudentDialogState extends ConsumerState<AddStudentDialog> {
 
   Future<void> _submitSingle() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_selectedProgramPublicId == null || _selectedGender == null) return;
+    if (_selectedProgramCode == null || _selectedGender == null) return;
 
     final success = await ref
         .read(addStudentControllerProvider.notifier)
@@ -117,14 +119,14 @@ class _AddStudentDialogState extends ConsumerState<AddStudentDialog> {
       firstName: _firstNameController.text.trim(),
       lastName: _lastNameController.text.trim(),
       email: _emailController.text.trim(),
-      programPublicId: _selectedProgramPublicId!,
+      // CHANGED: Passing the code here
+      programCode: _selectedProgramCode!,
       gender: _selectedGender!,
       enrollmentDate: _enrollmentDate,
-      // New Fields
-      phone: _phoneController.text.trim(),
-      nationalId: _nationalIdController.text.trim(),
+      phoneNumber: _phoneController.text.trim(),
+      nrcNumber: _nationalIdController.text.trim(),
       address: _addressController.text.trim(),
-      dob: _dob,
+      dateOfBirth: _dob,
     );
 
     if (success && mounted) Navigator.pop(context, true);
@@ -154,13 +156,25 @@ class _AddStudentDialogState extends ConsumerState<AddStudentDialog> {
     final csvContent = ref
         .read(addStudentControllerProvider.notifier)
         .generateCsvTemplate();
-    final Uri uri = Uri.dataFromString(
-      csvContent,
-      mimeType: 'text/csv',
-      encoding: utf8,
-    );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    if (kIsWeb) {
+      // --- WEB IMPLEMENTATION ---
+      final bytes = utf8.encode(csvContent);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "students.csv")
+        ..click();
+
+      html.Url.revokeObjectUrl(url); // Cleanup memory
+
+    } else {
+      // --- MOBILE IMPLEMENTATION (Future Proofing) ---
+      // When you eventually go mobile, put the path_provider/share logic here.
+      // For now, we can just print or show a snackbar.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Download not supported on mobile yet")),
+      );
     }
   }
 
@@ -178,8 +192,8 @@ class _AddStudentDialogState extends ConsumerState<AddStudentDialog> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: ConstrainedBox(
           constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : 600, // Slightly wider for new fields
-            maxHeight: 700, // Increased height
+            maxWidth: isMobile ? double.infinity : 600,
+            maxHeight: 700,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -339,20 +353,22 @@ class _AddStudentDialogState extends ConsumerState<AddStudentDialog> {
                               loading: () => const LinearProgressIndicator(),
                               error: (e, _) => const Text("Error loading programs"),
                               data: (programs) => DropdownButtonFormField<String>(
-                                value: _selectedProgramPublicId,
+                                value: _selectedProgramCode, // CHANGED: Using Code
                                 decoration: _decor("Academic Program", icon: Icons.school_outlined),
-                                items: programs.map<DropdownMenuItem<String>>((p) {
+                                items: programs
+                                    .where((p) => p.code != null)
+                                    .map<DropdownMenuItem<String>>((p) {
                                   // Safely accessing properties
-                                  final prog = p as dynamic;
                                   return DropdownMenuItem(
-                                    value: prog.publicId.toString(),
+                                    // CHANGED: Value is now the code, not publicId
+                                    value: p.code.toString(),
                                     child: Text(
-                                      prog.name.toString(),
+                                      p.name.toString(),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   );
                                 }).toList(),
-                                onChanged: (v) => setState(() => _selectedProgramPublicId = v),
+                                onChanged: (v) => setState(() => _selectedProgramCode = v),
                                 validator: (v) => v == null ? "Required" : null,
                               ),
                             ),

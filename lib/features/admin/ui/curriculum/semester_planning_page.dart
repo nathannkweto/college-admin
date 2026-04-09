@@ -22,7 +22,7 @@ final List<String> _times = [
   '13:00', '14:00', '15:00', '16:00', '17:00'
 ];
 
-class SemesterPlanningPage extends ConsumerWidget {
+class SemesterPlanningPage extends ConsumerStatefulWidget {
   final admin.Program program;
   final admin.Semester activeSemester;
 
@@ -33,45 +33,155 @@ class SemesterPlanningPage extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SemesterPlanningPage> createState() => _SemesterPlanningPageState();
+}
+
+class _SemesterPlanningPageState extends ConsumerState<SemesterPlanningPage> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  List<int> _activeSequences = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _calculateSequences();
+  }
+
+  void _calculateSequences() {
+    int currentSemNum = 1;
+    final rawSemNum = widget.activeSemester.semesterNumber;
+
+    // Parse Enum to int (Fall=1, Spring=2)
+    if (rawSemNum != null) {
+      currentSemNum = rawSemNum.value; // Assuming your Enum has a .value getter or similar logic
+      // If .value doesn't exist on your generated enum, use the string parsing logic you had:
+      // final String enumStr = rawSemNum.toString();
+      // final String digits = enumStr.replaceAll(RegExp(r'[^0-9]'), '');
+      // currentSemNum = int.tryParse(digits) ?? 1;
+    }
+
+    final isEven = currentSemNum % 2 == 0;
+
+    // Determine total semesters (default to 6 if null)
+    final dynamic rawTotal = widget.program.totalSemesters;
+    final int totalSemesters = (rawTotal is int)
+        ? rawTotal
+        : int.tryParse(rawTotal?.toString() ?? '') ?? 6;
+
+    _activeSequences = [];
+    for (int i = 1; i <= totalSemesters; i++) {
+      if ((i % 2 == 0) == isEven) {
+        _activeSequences.add(i);
+      }
+    }
+
+    _tabController = TabController(length: _activeSequences.length, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 1. Fetch Timetable Entries (For the whole semester period)
     final filter = TimetableFilter(
-        semesterId: activeSemester.publicId!,
-        programId: program.publicId!
+        semesterId: widget.activeSemester.publicId!,
+        programId: widget.program.publicId!
     );
     final timetableAsync = ref.watch(timetableEntriesProvider(filter));
 
+    // 2. Fetch Curriculum (To know which course belongs to which sequence)
+    final curriculumAsync = ref.watch(curriculumProvider(widget.program.publicId!));
+
     return Scaffold(
       appBar: AppBar(
-        title: Text("Planner: ${program.name}"),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Planner: ${widget.program.name}"),
+            Text(
+              "${widget.activeSemester.academicYear}",
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+            ),
+          ],
+        ),
         centerTitle: false,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => ref.refresh(timetableEntriesProvider(filter)),
+            onPressed: () {
+              ref.refresh(timetableEntriesProvider(filter));
+              ref.refresh(curriculumProvider(widget.program.publicId!));
+            },
           ),
         ],
+        bottom: _activeSequences.isEmpty
+            ? null
+            : TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          labelColor: Colors.blue.shade700,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: Colors.blue.shade700,
+          tabs: _activeSequences.map((seq) => Tab(text: "Semester $seq")).toList(),
+        ),
       ),
       body: timetableAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text("Error: $e")),
-        data: (entries) {
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 700) {
-                // MOBILE VIEW: Vertical List of Days
-                return _MobileListView(
-                  entries: entries,
-                  program: program,
-                  semester: activeSemester,
-                );
-              } else {
-                // DESKTOP VIEW: Grid (Days Vertical, Time Horizontal)
-                return _DesktopGridView(
-                  entries: entries,
-                  program: program,
-                  semester: activeSemester,
-                );
+        error: (e, _) => Center(child: Text("Error loading timetable: $e")),
+        data: (allEntries) {
+          return curriculumAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text("Error loading curriculum: $e")),
+            data: (curriculum) {
+
+              if (_activeSequences.isEmpty) {
+                return const Center(child: Text("No active semester sequences found."));
               }
+
+              // Create a quick lookup map: CourseID -> Sequence Number
+              final Map<String, int> courseSequenceMap = {};
+              for (var pc in curriculum) {
+                if (pc.publicId != null && pc.pivot.semesterSequence != null) {
+                  courseSequenceMap[pc.publicId!] = pc.pivot.semesterSequence!;
+                }
+              }
+
+              return TabBarView(
+                controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(), // Prevent accidental swipes if using drag-drop later
+                children: _activeSequences.map((sequence) {
+
+                  // Filter entries for this specific tab/sequence
+                  final tabEntries = allEntries.where((e) {
+                    final courseId = e.course?.publicId;
+                    if (courseId == null) return false;
+                    return courseSequenceMap[courseId] == sequence;
+                  }).toList();
+
+                  return LayoutBuilder(
+                    builder: (context, constraints) {
+                      if (constraints.maxWidth < 700) {
+                        return _MobileListView(
+                          entries: tabEntries,
+                          program: widget.program,
+                          semester: widget.activeSemester,
+                          targetSequence: sequence,
+                        );
+                      } else {
+                        return _DesktopGridView(
+                          entries: tabEntries,
+                          program: widget.program,
+                          semester: widget.activeSemester,
+                          targetSequence: sequence,
+                        );
+                      }
+                    },
+                  );
+                }).toList(),
+              );
             },
           );
         },
@@ -81,17 +191,19 @@ class SemesterPlanningPage extends ConsumerWidget {
 }
 
 // ==========================================
-// 1. DESKTOP GRID VIEW (FIXED)
+// 1. DESKTOP GRID VIEW
 // ==========================================
 class _DesktopGridView extends StatefulWidget {
   final List<admin.TimetableEntry> entries;
   final admin.Program program;
   final admin.Semester semester;
+  final int targetSequence; // Passed to dialog
 
   const _DesktopGridView({
     required this.entries,
     required this.program,
     required this.semester,
+    required this.targetSequence,
   });
 
   @override
@@ -99,7 +211,6 @@ class _DesktopGridView extends StatefulWidget {
 }
 
 class _DesktopGridViewState extends State<_DesktopGridView> {
-  // [FIX] explicit controllers for scrollbars
   final ScrollController _horizontalController = ScrollController();
   final ScrollController _verticalController = ScrollController();
 
@@ -112,18 +223,16 @@ class _DesktopGridViewState extends State<_DesktopGridView> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Horizontal Scrollbar
     return Scrollbar(
       controller: _horizontalController,
       thumbVisibility: true,
       trackVisibility: true,
       child: SingleChildScrollView(
-        controller: _horizontalController, // Attach Horizontal
+        controller: _horizontalController,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.all(16),
         child: SizedBox(
-          // Ensure width constraint so vertical scrollbar appears at edge
-          width: 1540, // 100 (Header) + 144 * 10 (Time slots)
+          width: 1540,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -132,27 +241,24 @@ class _DesktopGridViewState extends State<_DesktopGridView> {
                 children: [
                   const SizedBox(width: 100),
                   ..._times.map((time) => Container(
-                    width: 140, // Match slot width
+                    width: 140,
                     padding: const EdgeInsets.only(bottom: 8),
                     alignment: Alignment.center,
                     child: Text(
                       time,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade600,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey.shade600),
                     ),
                   )),
                 ],
               ),
 
-              // 2. Vertical Scrollbar (Wrapped around content)
+              // Vertical Scrollbar
               Expanded(
                 child: Scrollbar(
                   controller: _verticalController,
                   thumbVisibility: true,
                   child: SingleChildScrollView(
-                    controller: _verticalController, // Attach Vertical
+                    controller: _verticalController,
                     scrollDirection: Axis.vertical,
                     child: Column(
                       children: [
@@ -188,7 +294,8 @@ class _DesktopGridViewState extends State<_DesktopGridView> {
                                         time,
                                         entry,
                                         widget.program,
-                                        widget.semester
+                                        widget.semester,
+                                        widget.targetSequence // Pass tab sequence
                                     ),
                                   ),
                                 );
@@ -216,11 +323,13 @@ class _MobileListView extends StatelessWidget {
   final List<admin.TimetableEntry> entries;
   final admin.Program program;
   final admin.Semester semester;
+  final int targetSequence;
 
   const _MobileListView({
     required this.entries,
     required this.program,
     required this.semester,
+    required this.targetSequence,
   });
 
   @override
@@ -231,8 +340,6 @@ class _MobileListView extends StatelessWidget {
       itemBuilder: (context, index) {
         final dayEntry = _dayMap.entries.elementAt(index);
         final apiDay = dayEntry.value;
-
-        // Count entries for this day to show a badge or summary
         final dayEntriesCount = entries.where((e) => e.day == apiDay).length;
 
         return Card(
@@ -264,7 +371,7 @@ class _MobileListView extends StatelessWidget {
                     ? const Icon(Icons.edit, size: 16, color: Colors.blue)
                     : const Icon(Icons.add, size: 16, color: Colors.grey),
                 onTap: () => _showAssignDialog(
-                    context, apiDay, dayEntry.key, time, entry, program, semester
+                    context, apiDay, dayEntry.key, time, entry, program, semester, targetSequence
                 ),
               );
             }).toList(),
@@ -345,7 +452,9 @@ admin.TimetableEntry? _findEntry(List<admin.TimetableEntry> entries, String day,
   }
 }
 
-// Helper to trigger dialog
+// ------------------------------------------
+// UPDATED: Dialog Trigger
+// ------------------------------------------
 void _showAssignDialog(
     BuildContext context,
     String apiDay,
@@ -354,12 +463,14 @@ void _showAssignDialog(
     admin.TimetableEntry? entry,
     admin.Program program,
     admin.Semester semester,
+    int targetSequence, // New Param: The sequence of the current Tab
     ) {
   showDialog(
     context: context,
     builder: (_) => _AssignClassDialog(
       programId: program.publicId!,
       semesterId: semester.publicId!,
+      targetSequence: targetSequence, // Pass it down
       day: apiDay,
       time: time,
       displayDayLabel: displayDay,
@@ -369,19 +480,21 @@ void _showAssignDialog(
 }
 
 // ==========================================
-// 4. DIALOG (Cleaned Up)
+// 4. DIALOG (With Specific Sequence Logic)
 // ==========================================
 class _AssignClassDialog extends ConsumerStatefulWidget {
   final String programId;
   final String semesterId;
-  final String day; // "MON"
-  final String displayDayLabel; // "Monday"
+  final int targetSequence;
+  final String day;
+  final String displayDayLabel;
   final String time;
   final admin.TimetableEntry? existingEntry;
 
   const _AssignClassDialog({
     required this.programId,
     required this.semesterId,
+    required this.targetSequence,
     required this.day,
     required this.displayDayLabel,
     required this.time,
@@ -394,33 +507,37 @@ class _AssignClassDialog extends ConsumerStatefulWidget {
 
 class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
   String? _selectedCourseId;
-  String? _selectedLecturerId;
   String? _selectedRoomId;
+
+  // Validation state
+  bool _isLecturerMissing = false;
+
   List<admin.ProgramCourse> _loadedProgramCourses = [];
 
   @override
   void initState() {
     super.initState();
     if (widget.existingEntry != null) {
-      // In a real app, you might need to find the ID by matching objects if IDs aren't direct
-      // Here we assume simple mapping for the UI state
       _selectedRoomId = widget.existingEntry!.location;
       _selectedCourseId = widget.existingEntry!.course?.publicId;
-      _selectedLecturerId = widget.existingEntry!.lecturer?.publicId;
+      // We don't need to load lecturer name anymore
     }
   }
 
   void _onCourseChanged(String? courseId) {
     setState(() {
       _selectedCourseId = courseId;
-      _selectedLecturerId = null;
+      _isLecturerMissing = false;
 
-      // Auto-select default lecturer logic
+      // Validation: Check if the selected course has a lecturer assigned in the backend
       if (courseId != null && _loadedProgramCourses.isNotEmpty) {
         try {
-          final pCourse = _loadedProgramCourses.firstWhere((pc) => pc.publicId == courseId);
-          if (pCourse.pivot?.lecturer?.publicId != null) {
-            _selectedLecturerId = pCourse.pivot!.lecturer!.publicId;
+          final pCourse = _loadedProgramCourses.firstWhere(
+                  (pc) => pc.publicId == courseId
+          );
+
+          if (pCourse.pivot.lecturer == null) {
+            _isLecturerMissing = true;
           }
         } catch (_) {}
       }
@@ -431,7 +548,6 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
   Widget build(BuildContext context) {
     final allCoursesAsync = ref.watch(coursesProvider);
     final curriculumAsync = ref.watch(curriculumProvider(widget.programId));
-    final lecturersAsync = ref.watch(lecturersProvider);
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -445,6 +561,10 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
             "${widget.displayDayLabel} at ${widget.time}",
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600, fontWeight: FontWeight.normal),
           ),
+          Text(
+            "Semester ${widget.targetSequence}",
+            style: TextStyle(fontSize: 12, color: Colors.blue.shade700, fontWeight: FontWeight.bold),
+          ),
         ],
       ),
       content: SizedBox(
@@ -455,7 +575,6 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
             children: [
               const SizedBox(height: 8),
 
-              // Load Data Wrappers
               allCoursesAsync.when(
                 loading: () => const LinearProgressIndicator(),
                 error: (e, _) => Text("Error loading courses: $e"),
@@ -466,14 +585,32 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
                     data: (programCourses) {
                       _loadedProgramCourses = programCourses.whereType<admin.ProgramCourse>().toList();
 
-                      // Filter valid courses
-                      final validCodes = _loadedProgramCourses.map((pc) => pc.code).toSet();
-                      final validCourses = allCourses
-                          .where((c) => validCodes.contains(c.code) && c.publicId != null)
-                          .toList();
+                      // Filter courses: only showing those in the current Semester Sequence
+                      final validCourses = allCourses.where((c) {
+                        try {
+                          final progMatch = _loadedProgramCourses.firstWhere(
+                                  (pc) => pc.code == c.code
+                          );
+                          // ignore: unnecessary_null_comparison
+                          if (progMatch.pivot == null) return false;
+                          final int courseSeq = progMatch.pivot.semesterSequence ?? 0;
+                          return courseSeq == widget.targetSequence;
+                        } catch (e) {
+                          return false;
+                        }
+                      }).toList();
+
+                      if (validCourses.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text("No courses available for this semester.", style: TextStyle(color: Colors.red)),
+                        );
+                      }
 
                       return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // 1. Course Dropdown
                           DropdownButtonFormField<String>(
                             value: _selectedCourseId,
                             isExpanded: true,
@@ -488,31 +625,20 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
                             )).toList(),
                             onChanged: _onCourseChanged,
                           ),
-                          const SizedBox(height: 16),
 
-                          // Lecturers
-                          lecturersAsync.when(
-                            loading: () => const LinearProgressIndicator(),
-                            error: (_,__) => const Text("Error loading lecturers"),
-                            data: (lecturers) => DropdownButtonFormField<String>(
-                              value: _selectedLecturerId,
-                              isExpanded: true,
-                              decoration: const InputDecoration(
-                                labelText: "Lecturer",
-                                border: OutlineInputBorder(),
-                                prefixIcon: Icon(Icons.person, size: 20),
+                          // Warning text if course has no lecturer (Validation only, no extra field)
+                          if (_isLecturerMissing)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0, left: 4),
+                              child: Text(
+                                "Warning: This course has no lecturer assigned in Curriculum settings.",
+                                style: TextStyle(color: Colors.red.shade700, fontSize: 12),
                               ),
-                              items: lecturers.map((l) => DropdownMenuItem(
-                                value: l.publicId,
-                                child: Text("${l.firstName} ${l.lastName}"),
-                              )).toList(),
-                              onChanged: (v) => setState(() => _selectedLecturerId = v),
                             ),
-                          ),
 
                           const SizedBox(height: 16),
 
-                          // Room
+                          // 2. Room Field
                           TextFormField(
                             initialValue: _selectedRoomId,
                             decoration: const InputDecoration(
@@ -536,7 +662,11 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
         if (widget.existingEntry != null)
           TextButton(
             onPressed: () {
-              // Implement Delete logic
+              ref.read(timetableControllerProvider.notifier).removeClass(
+                  entryId: widget.existingEntry!.publicId!,
+                  programId: widget.programId,
+                  semesterId: widget.semesterId
+              );
               Navigator.pop(context);
             },
             child: const Text("Delete", style: TextStyle(color: Colors.red)),
@@ -546,10 +676,10 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
           child: const Text("Cancel"),
         ),
         ElevatedButton(
-          onPressed: (_selectedCourseId == null || _selectedLecturerId == null || _selectedRoomId == null)
+          // Disable save if course missing, room missing, or backend validation would fail
+          onPressed: (_selectedCourseId == null || _selectedRoomId == null || _isLecturerMissing)
               ? null
               : () async {
-            // Simple logic: End time is Start Time + 1 hour
             final startParts = widget.time.split(':');
             final endHour = int.parse(startParts[0]) + 1;
             final endTime = "${endHour.toString().padLeft(2, '0')}:${startParts[1]}";
@@ -558,7 +688,6 @@ class _AssignClassDialogState extends ConsumerState<_AssignClassDialog> {
               programId: widget.programId,
               semesterId: widget.semesterId,
               courseId: _selectedCourseId!,
-              lecturerId: _selectedLecturerId!,
               day: widget.day,
               startTime: widget.time,
               endTime: endTime,

@@ -185,18 +185,20 @@ components:
           format: uuid
         day:
           type: string
+          example: "MON"
         start_time:
           type: string
           format: time
         end_time:
           type: string
           format: time
+        location:
+          type: string
+        # Read-only details populated by backend relations
         course:
           $ref: "#/components/schemas/Course"
         lecturer:
           $ref: "#/components/schemas/Lecturer"
-        location:
-          type: string
 
     # --- EXAM SEASON SCHEMA ---
     ExamSeason:
@@ -254,25 +256,21 @@ components:
           type: string
         course_code:
           type: string
-        total_score:
+        # Renamed 'total_score' -> 'score' to match table column directly
+        score:
           type: number
           format: float
         grade:
           type: string
-        status:
-          type: string
-          enum: [ PASS, FAIL ]
+        # Removed 'status' (PASS/FAIL) as it is calculated logic, not table data
 
     StudentTranscript:
       type: object
       properties:
         student:
           $ref: "#/components/schemas/Student"
-        semester_gpa:
-          type: number
-          format: float
-        academic_standing:
-          type: string
+        # Removed 'semester_gpa' (calculated)
+        # Removed 'academic_standing' (calculated)
         results:
           type: array
           items:
@@ -389,14 +387,14 @@ components:
           enum: [M, F]
         department:
           $ref: "#/components/schemas/Department"
-        national_id:
+        nrc_number:
           type: string
-        dob:
+        date_of_birth:
           type: string
           format: date
         address:
           type: string
-        phone:
+        phone_number:
           type: string
 
     ExamPaper:
@@ -797,16 +795,16 @@ paths:
             schema:
               type: object
               required:
-                - first_name
                 - last_name
-                - email
-                - program_public_id
+                - first_name
+                - nrc_number
                 - gender
-                - enrollment_date
-                - national_id
-                - dob
+                - date_of_birth
                 - address
-                - phone
+                - email
+                - phone_number
+                - program_code
+                - enrollment_date
               properties:
                 first_name:
                   type: string
@@ -815,23 +813,22 @@ paths:
                 email:
                   type: string
                   format: email
-                program_public_id:
+                program_code:
                   type: string
-                  format: uuid
                 gender:
                   type: string
                   enum: [M, F]
                 enrollment_date:
                   type: string
                   format: date
-                national_id:
+                nrc_number:
                   type: string
-                dob:
+                date_of_birth:
                   type: string
                   format: date
                 address:
                   type: string
-                phone:
+                phone_number:
                   type: string
       responses:
         "201":
@@ -929,7 +926,7 @@ paths:
                 - first_name
                 - last_name
                 - email
-                - department_public_id
+                - department_code
                 - title
                 - gender
               properties:
@@ -940,23 +937,22 @@ paths:
                 email:
                   type: string
                   format: email
-                department_public_id:
+                department_code:
                   type: string
-                  format: uuid
                 title:
                   type: string
                   enum: [Mr, Ms, Mrs, Dr, Prof]
                 gender:
                   type: string
                   enum: [M, F]
-                national_id:
+                nrc_number:
                   type: string
-                dob:
+                date_of_birth:
                   type: string
                   format: date
                 address:
                   type: string
-                phone:
+                phone_number:
                   type: string
       responses:
         "201":
@@ -1015,6 +1011,7 @@ paths:
                 - semester_number
                 - length_weeks
                 - start_date
+                - is_active
               properties:
                 academic_year:
                   type: string
@@ -1025,6 +1022,10 @@ paths:
                   format: date
                 length_weeks:
                   type: integer
+                is_active:
+                  type: boolean
+                  default: false
+                  description: Set to true to immediately start this semester and trigger enrollment.
       responses:
         "201":
           description: Created
@@ -1061,6 +1062,7 @@ paths:
   /logistics/timetable:
     get:
       tags: [ Timetables ]
+      summary: List timetable entries
       operationId: logisticsTimetableGet
       parameters:
         - name: semester_public_id
@@ -1071,6 +1073,7 @@ paths:
             format: uuid
         - name: program_public_id
           in: query
+          description: Filter by program
           schema:
             type: string
             format: uuid
@@ -1089,6 +1092,7 @@ paths:
 
     post:
       tags: [ Timetables ]
+      summary: Create a new timetable entry
       operationId: logisticsTimetablePost
       requestBody:
         required: true
@@ -1100,9 +1104,11 @@ paths:
                 - semester_public_id
                 - program_public_id
                 - course_public_id
+                # Lecturer removed: derived from program_course
                 - day
                 - start_time
                 - end_time
+                - location
               properties:
                 semester_public_id:
                   type: string
@@ -1113,22 +1119,36 @@ paths:
                 course_public_id:
                   type: string
                   format: uuid
-                lecturer_public_id:
-                  type: string
-                  format: uuid
                 day:
                   type: string
+                  enum: [ MON, TUE, WED, THU, FRI, SAT, SUN ]
                 start_time:
                   type: string
                   format: time
+                  example: "08:00"
                 end_time:
                   type: string
                   format: time
+                  example: "09:30"
                 location:
                   type: string
       responses:
         "201":
           description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Timetable entry created"
+                  data:
+                    $ref: "#/components/schemas/TimetableEntry"
+        "409":
+          description: Conflict
+        "422":
+          description: Validation Error
 
   # --- EXAMS ---
   /exams/seasons:

@@ -69,7 +69,6 @@ paths:
   /courses/{course_public_id}:
     get:
       summary: Get Course Details & Student List
-      description: Returns detailed course info and the list of students in that specific program cohort.
       operationId: lecturerCourseDetailsGet
       parameters:
         - name: course_public_id
@@ -106,8 +105,8 @@ paths:
       responses:
         "200":
           description: Grades submitted successfully
-        "400":
-          description: Invalid input or validation error
+        "422":
+          description: Validation Error (Missing fields or invalid ID)
 
 components:
   schemas:
@@ -139,8 +138,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ClassSession"
-
-
 
     ClassSession:
       type: object
@@ -197,7 +194,13 @@ components:
 
     CourseCohortDetails:
       type: object
+      required: [ program_course_id ]
       properties:
+        # NEW FIELD: Required for grading submission
+        program_course_id:
+          type: integer
+          description: The internal database ID (not UUID) required for the grading endpoint.
+          example: 45
         course:
           type: object
           properties:
@@ -212,6 +215,10 @@ components:
         context:
           type: object
           properties:
+            # NEW FIELD: Needed for submission context
+            semester:
+              type: string
+              example: "2024-2025 Semester 1"
             semester_sequence: { type: integer }
             student_count: { type: integer }
         students:
@@ -259,16 +266,20 @@ components:
           format: float
           minimum: 0
           maximum: 100
-        remarks:
-          type: string
-          nullable: true
 
-      # 2. The Batch Wrapper
     GradeSubmissionBatch:
       type: object
-      required: [ students ]
+      required: [ program_course_id, semester, submissions ]
       properties:
-        students:
+        # CHANGED: Now expects an Integer to match Laravel 'exists:program_courses,id'
+        program_course_id:
+          type: integer
+          description: The internal database ID of the program_course (from CourseCohortDetails)
+          example: 45
+        semester:
+          type: string
+          description: The semester context (e.g., "2024-2025 Semester 1")
+        submissions:
           type: array
           items:
             $ref: "#/components/schemas/GradeSubmission"

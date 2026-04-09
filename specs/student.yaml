@@ -24,14 +24,9 @@ paths:
 
   /schedule:
     get:
+      summary: Get Student Weekly Timetable
       operationId: studentScheduleGet
-      parameters:
-        - name: scope
-          in: query
-          schema:
-            type: string
-            enum: [today, week]
-            default: today
+      description: Returns the full weekly schedule grouped by day for the student's current program and semester.
       responses:
         '200':
           description: Successful response
@@ -43,7 +38,7 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ClassSession'
+                      $ref: '#/components/schemas/DailySchedule'
 
   /courses/current:
     get:
@@ -93,7 +88,9 @@ paths:
 
   /results:
     get:
+      summary: Get Student Academic History
       operationId: studentResultsGet
+      description: Returns a list of all enrolled courses grouped by semester sequence (e.g., Year 1 - Semester 1). Scores are masked if results are not yet published.
       responses:
         '200':
           description: Successful response
@@ -133,13 +130,28 @@ components:
         current_semester: { type: integer }
         avatar_url: { type: string, nullable: true }
 
+    DailySchedule:
+      type: object
+      properties:
+        day_name:
+          type: string
+          example: "Monday"
+        is_free_day:
+          type: boolean
+          example: false
+        classes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassSession'
+
     ClassSession:
       type: object
       properties:
+        public_id: { type: string }
         course_code: { type: string }
         course_name: { type: string }
-        start_time: { type: string }
-        end_time: { type: string }
+        start_time: { type: string, example: "08:00" }
+        end_time: { type: string, example: "10:00" }
         location: { type: string }
         lecturer_name: { type: string }
         color_hex: { type: string }
@@ -179,29 +191,66 @@ components:
     ExamEvent:
       type: object
       properties:
-        title: { type: string }
-        date: { type: string, format: date }
-        time: { type: string }
-        location: { type: string }
+        public_id:
+          type: string
+          description: Unique identifier for the exam paper
+        title:
+          type: string
+          description: Course Name (e.g. Intro to Programming)
+        code:
+          type: string
+          description: Course Code (e.g. CS101)
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          description: Start time (e.g. 09:00)
+        duration:
+          type: string
+          description: formatted duration string (e.g. 120 mins)
+        location:
+          type: string
 
     Transcript:
       type: object
       properties:
-        gpa: { type: number }
         semesters:
           type: array
           items:
-            type: object
-            properties:
-              semester_name: { type: string }
-              results:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    course_name: { type: string }
-                    grade: { type: string }
-                    points: { type: number }
+            $ref: '#/components/schemas/SemesterGroup'
+
+    SemesterGroup:
+      type: object
+      properties:
+        semester_name:
+          type: string
+          example: "Year 1 - Semester 1"
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseResult'
+
+    CourseResult:
+      type: object
+      properties:
+        course_name:
+          type: string
+          example: "Introduction to Computer Science"
+        grade:
+          type: string
+          nullable: true
+          description: "The letter grade (e.g., 'A', 'B', 'F') or 'N/A' if not published/ongoing."
+          example: "A"
+        score:
+          type: number
+          nullable: true
+          description: "The raw score (0-100). Null if not published."
+          example: 85.5
+        is_published:
+          type: boolean
+          description: "Indicates if the result is officially released."
+          example: true
 
     StudentFinance:
       type: object

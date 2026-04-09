@@ -253,7 +253,10 @@ class _AddProgramDialogState extends ConsumerState<AddProgramDialog> {
                 const SizedBox(height: 16),
 
                 // 2. Department Dropdown with Async Handling
-                const Text("Department", style: TextStyle(fontWeight: FontWeight.w500)),
+                const Text(
+                  "Department",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 8),
                 deptsAsync.when(
                   loading: () => const LinearProgressIndicator(),
@@ -265,21 +268,27 @@ class _AddProgramDialogState extends ConsumerState<AddProgramDialog> {
                     if (depts.isEmpty) {
                       return const Text(
                         "No departments available. Create one first.",
-                        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
                       );
                     }
                     return DropdownButtonFormField<String>(
                       value: _selectedDeptId,
                       isExpanded: true,
-                      decoration: _buildInputDeco("Select Department", Icons.business),
+                      decoration: _buildInputDeco(
+                        "Select Department",
+                        Icons.business,
+                      ),
                       items: depts
                           .where((d) => d.publicId != null)
                           .map(
                             (d) => DropdownMenuItem(
-                          value: d.publicId!,
-                          child: Text(d.name ?? 'Unnamed Department'),
-                        ),
-                      )
+                              value: d.publicId!,
+                              child: Text(d.name ?? 'Unnamed Department'),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => _selectedDeptId = v),
                       validator: (v) => v == null ? "Required" : null,
@@ -290,7 +299,10 @@ class _AddProgramDialogState extends ConsumerState<AddProgramDialog> {
                 const SizedBox(height: 16),
 
                 // 3. Qualification Dropdown with Async Handling
-                const Text("Qualification", style: TextStyle(fontWeight: FontWeight.w500)),
+                const Text(
+                  "Qualification",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(height: 8),
                 qualsAsync.when(
                   loading: () => const LinearProgressIndicator(),
@@ -302,21 +314,27 @@ class _AddProgramDialogState extends ConsumerState<AddProgramDialog> {
                     if (quals.isEmpty) {
                       return const Text(
                         "No qualifications available. Create one first.",
-                        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
                       );
                     }
                     return DropdownButtonFormField<String>(
                       value: _selectedQualId,
                       isExpanded: true,
-                      decoration: _buildInputDeco("Select Qualification", Icons.workspace_premium),
+                      decoration: _buildInputDeco(
+                        "Select Qualification",
+                        Icons.workspace_premium,
+                      ),
                       items: quals
                           .where((q) => q.publicId != null)
                           .map(
                             (q) => DropdownMenuItem(
-                          value: q.publicId!,
-                          child: Text(q.name ?? 'Unnamed Qualification'),
-                        ),
-                      )
+                              value: q.publicId!,
+                              child: Text(q.name ?? 'Unnamed Qualification'),
+                            ),
+                          )
                           .toList(),
                       onChanged: (v) => setState(() => _selectedQualId = v),
                       validator: (v) => v == null ? "Required" : null,
@@ -341,12 +359,12 @@ class _AddProgramDialogState extends ConsumerState<AddProgramDialog> {
               final success = await ref
                   .read(curriculumControllerProvider.notifier)
                   .addProgram(
-                name: _nameCtrl.text,
-                code: _codeCtrl.text,
-                deptId: _selectedDeptId!,
-                qualId: _selectedQualId!,
-                semesters: int.parse(_semestersCtrl.text),
-              );
+                    name: _nameCtrl.text,
+                    code: _codeCtrl.text,
+                    deptId: _selectedDeptId!,
+                    qualId: _selectedQualId!,
+                    semesters: int.parse(_semestersCtrl.text),
+                  );
               if (success && mounted) Navigator.pop(context);
             }
           },
@@ -356,6 +374,7 @@ class _AddProgramDialogState extends ConsumerState<AddProgramDialog> {
     );
   }
 }
+
 // ==========================================
 // 4. ADD COURSE DIALOG
 // ==========================================
@@ -417,10 +436,10 @@ class _AddCourseDialogState extends ConsumerState<AddCourseDialog> {
                 items: depts
                     .map(
                       (d) => DropdownMenuItem(
-                    value: d.publicId!,
-                    child: Text(d.name ?? 'Unnamed Department'),
-                  ),
-                )
+                        value: d.publicId!,
+                        child: Text(d.name ?? 'Unnamed Department'),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedDeptId = v),
                 validator: (v) => v == null ? "Required" : null,
@@ -504,7 +523,9 @@ class _AddCourseToCurriculumDialogState
                 loading: () => const LinearProgressIndicator(),
                 error: (e, _) => Text("Error loading courses: $e"),
                 data: (courses) {
-                  final validCourses = courses.where((c) => c.publicId != null).toList();
+                  final validCourses = courses
+                      .where((c) => c.publicId != null)
+                      .toList();
 
                   if (validCourses.isEmpty) {
                     return const Text("No courses available to assign.");
@@ -539,7 +560,10 @@ class _AddCourseToCurriculumDialogState
                   return DropdownButtonFormField<String>(
                     value: _selectedLecturerId,
                     isExpanded: true,
-                    decoration: _buildInputDeco("Default Lecturer (Optional)", Icons.person),
+                    decoration: _buildInputDeco(
+                      "Default Lecturer (Optional)",
+                      Icons.person,
+                    ),
                     hint: const Text("Select a lecturer..."),
                     items: [
                       // Option to unselect lecturer
@@ -576,16 +600,17 @@ class _AddCourseToCurriculumDialogState
           onPressed: _selectedCourseId == null
               ? null
               : () async {
-            final success = await ref
-                .read(curriculumControllerProvider.notifier)
-                .addCourseToSemester(
-              widget.programId,
-              _selectedCourseId!,
-              widget.semesterSeq,
-              lecturerId: _selectedLecturerId, // <--- PASSING THE LECTURER
-            );
-            if (success && mounted) Navigator.pop(context);
-          },
+                  final success = await ref
+                      .read(curriculumControllerProvider.notifier)
+                      .addCourseToSemester(
+                        widget.programId,
+                        _selectedCourseId!,
+                        widget.semesterSeq,
+                        lecturerId:
+                            _selectedLecturerId, // <--- PASSING THE LECTURER
+                      );
+                  if (success && mounted) Navigator.pop(context);
+                },
           child: const Text("Assign Course"),
         ),
       ],
@@ -605,7 +630,9 @@ class AddSemesterDialog extends ConsumerStatefulWidget {
 
 class _AddSemesterDialogState extends ConsumerState<AddSemesterDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _yearCtrl = TextEditingController(text: "${DateTime.now().year}-${DateTime.now().year + 1}");
+  final _yearCtrl = TextEditingController(
+    text: "${DateTime.now().year}-${DateTime.now().year + 1}",
+  );
   final _weeksCtrl = TextEditingController(text: "16");
 
   int _semesterNumber = 1;
@@ -614,7 +641,7 @@ class _AddSemesterDialogState extends ConsumerState<AddSemesterDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: _dialogShape,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: const Text(
         "Start New Semester",
         style: TextStyle(fontWeight: FontWeight.bold),
@@ -622,146 +649,174 @@ class _AddSemesterDialogState extends ConsumerState<AddSemesterDialog> {
       content: SizedBox(
         width: 400,
         child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Academic Year Input
               TextFormField(
-              controller: _yearCtrl,
-              decoration: _buildInputDeco(
-                "Academic Year (e.g. 2024-2025)",
-                Icons.calendar_today,
+                controller: _yearCtrl,
+                decoration: InputDecoration(
+                  labelText: "Academic Year (e.g. 2024-2025)",
+                  prefixIcon: const Icon(Icons.calendar_today),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+                validator: (v) => v!.isEmpty ? "Required" : null,
               ),
-              validator: (v) => v!.isEmpty ? "Required" : null,
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              "Semester Number",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.blueGrey,
+              const SizedBox(height: 16),
+
+              // Semester Number Radio
+              const Text(
+                "Semester Number",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blueGrey,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-            decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.grey.shade50,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: RadioListTile<int>(
-              title: const Text("Sem 1"),
-              value: 1,
-              groupValue: _semesterNumber,
-              activeColor: Colors.blue.shade700,
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => _semesterNumber = v!),
-            ),
+              const SizedBox(height: 8),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.grey.shade50,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<int>(
+                        title: const Text("Sem 1"),
+                        value: 1,
+                        groupValue: _semesterNumber,
+                        activeColor: Colors.blue.shade700,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (v) => setState(() => _semesterNumber = v!),
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<int>(
+                        title: const Text("Sem 2"),
+                        value: 2,
+                        groupValue: _semesterNumber,
+                        activeColor: Colors.blue.shade700,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (v) => setState(() => _semesterNumber = v!),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Weeks Input
+              TextFormField(
+                controller: _weeksCtrl,
+                decoration: InputDecoration(
+                  labelText: "Length (Weeks)",
+                  prefixIcon: const Icon(Icons.timelapse),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+                keyboardType: TextInputType.number,
+                validator: (v) => v!.isEmpty ? "Required" : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Date Picker
+              InkWell(
+                onTap: () async {
+                  final d = await showDatePicker(
+                    context: context,
+                    initialDate: _startDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime(2030),
+                  );
+                  if (d != null) setState(() => _startDate = d);
+                },
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                    color: Colors.grey.shade50,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.date_range,
+                        color: Colors.blueGrey,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "Start Date",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blueGrey,
+                            ),
+                          ),
+                          Text(
+                            // Simple formatting without requiring intl package imports
+                            "${_startDate.toLocal()}".split(' ')[0],
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: RadioListTile<int>(
-              title: const Text("Sem 2"),
-              value: 2,
-              groupValue: _semesterNumber,
-              activeColor: Colors.blue.shade700,
-              contentPadding: EdgeInsets.zero,
-              onChanged: (v) => setState(() => _semesterNumber = v!),
-            ),
-          ),
-        ],
+        ),
       ),
-    ),
-    const SizedBox(height: 16),
-    TextFormField(
-    controller: _weeksCtrl,
-    decoration: _buildInputDeco("Length (Weeks)", Icons.timelapse),
-    keyboardType: TextInputType.number,
-    validator: (v) => v!.isEmpty ? "Required" : null,
-    ),
-    const SizedBox(height: 16),
-    InkWell(
-    onTap: () async {
-    final d = await showDatePicker(
-    context: context,
-    initialDate: _startDate,
-    firstDate: DateTime(2020),
-    lastDate: DateTime(2030),
-    );
-    if (d != null) setState(() => _startDate = d);
-    },
-    borderRadius: BorderRadius.circular(12),
-    child: Container(
-    padding: const EdgeInsets.symmetric(
-    horizontal: 16,
-    vertical: 16,
-    ),
-    decoration: BoxDecoration(
-    border: Border.all(color: Colors.grey.shade300),
-    borderRadius: BorderRadius.circular(12),
-    color: Colors.grey.shade50,
-    ),
-    child: Row(
-    children: [
-    const Icon(
-    Icons.date_range,
-    color: Colors.blueGrey,
-    size: 20,
-    ),
-    const SizedBox(width: 12),
-    Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-    const Text(
-    "Start Date",
-    style: TextStyle(
-    fontSize: 12,
-    color: Colors.blueGrey,
-    ),
-    ),
-    Text(
-    DateFormat('yyyy-MM-dd').format(_startDate),
-    style: const TextStyle(fontWeight: FontWeight.w600),
-    ),
-    ],
-    ),
-    ],
-    ),
-    ),
-    ),
-    ],
-    ),
-    ),
-    ),
-    actionsPadding: const EdgeInsets.all(20),
-    actions: [
-    TextButton(
-    onPressed: () => Navigator.pop(context),
-    child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600)),
-    ),
-    ElevatedButton(
-    style: _primaryBtnStyle,
-    onPressed: () async {
-    if (_formKey.currentState!.validate()) {
-    // UPDATED: Use startSemester instead of addSemester
-    // to ensure it sets the status to Active immediately.
-    final success = await ref
-        .read(curriculumControllerProvider.notifier)
-        .addSemester(
-    _yearCtrl.text,
-    _semesterNumber,
-    int.parse(_weeksCtrl.text),
-    _startDate,
-    );
-    if (success && mounted) Navigator.pop(context);
-    }
-    },
-    child: const Text("Start Semester"),
-    ),
-    ],
+      actionsPadding: const EdgeInsets.all(20),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text("Cancel", style: TextStyle(color: Colors.grey.shade600)),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue.shade800,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            elevation: 0,
+          ),
+          onPressed: () async {
+            if (_formKey.currentState!.validate()) {
+              // ---------------------------------------------------
+              // CRITICAL FIX: Pass 'isActive: true'
+              // Ensure your Controller's addSemester method accepts
+              // this named parameter!
+              // ---------------------------------------------------
+              final success = await ref
+                  .read(curriculumControllerProvider.notifier)
+                  .addSemester(
+                _yearCtrl.text,
+                _semesterNumber,
+                int.parse(_weeksCtrl.text),
+                _startDate,
+                isActive: true, // <--- Forces backend to trigger batch
+              );
+
+              if (success && mounted) Navigator.pop(context);
+            }
+          },
+          child: const Text("Start Semester"),
+        ),
+      ],
     );
   }
 }
@@ -773,7 +828,8 @@ class AddExamSeasonDialog extends ConsumerStatefulWidget {
   const AddExamSeasonDialog({super.key});
 
   @override
-  ConsumerState<AddExamSeasonDialog> createState() => _AddExamSeasonDialogState();
+  ConsumerState<AddExamSeasonDialog> createState() =>
+      _AddExamSeasonDialogState();
 }
 
 class _AddExamSeasonDialogState extends ConsumerState<AddExamSeasonDialog> {
@@ -831,8 +887,8 @@ class _AddExamSeasonDialogState extends ConsumerState<AddExamSeasonDialog> {
     return activeSemAsync.when(
       loading: () => const AlertDialog(
         content: SizedBox(
-            height: 100,
-            child: Center(child: CircularProgressIndicator())
+          height: 100,
+          child: Center(child: CircularProgressIndicator()),
         ),
       ),
       error: (e, stack) => AlertDialog(
@@ -849,7 +905,9 @@ class _AddExamSeasonDialogState extends ConsumerState<AddExamSeasonDialog> {
         if (semester == null) {
           return AlertDialog(
             title: const Text("No Active Semester"),
-            content: const Text("You cannot start an exam season without an active semester."),
+            content: const Text(
+              "You cannot start an exam season without an active semester.",
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
@@ -874,12 +932,16 @@ class _AddExamSeasonDialogState extends ConsumerState<AddExamSeasonDialog> {
               children: [
                 Text(
                   "Semester: ${semester.academicYear} (Sem ${semester.semesterNumber})",
-                  style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 const Text(
                   "This will activate 'Exam Mode' for the current semester. "
-                      "Lecturers will be able to submit grades.",
+                  "Lecturers will be able to submit grades.",
                   style: TextStyle(fontSize: 13, color: Colors.black87),
                 ),
                 const SizedBox(height: 16),
@@ -915,13 +977,13 @@ class _AddExamSeasonDialogState extends ConsumerState<AddExamSeasonDialog> {
               ),
               child: _isSubmitting
                   ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : const Text("Start Exams"),
             ),
           ],
@@ -985,7 +1047,9 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text("Error: $e")),
                 data: (courses) {
-                  final safeCourses = courses.whereType<admin.ProgramCourse>().toList();
+                  final safeCourses = courses
+                      .whereType<admin.ProgramCourse>()
+                      .toList();
 
                   return ListView.separated(
                     separatorBuilder: (_, __) => const SizedBox(height: 16),
@@ -1018,7 +1082,8 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                 ),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     "Semester $semSeq",
@@ -1030,10 +1095,11 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                     onPressed: () {
                                       showDialog(
                                         context: context,
-                                        builder: (_) => AddCourseToCurriculumDialog(
-                                          programId: program.publicId!,
-                                          semesterSeq: semSeq,
-                                        ),
+                                        builder: (_) =>
+                                            AddCourseToCurriculumDialog(
+                                              programId: program.publicId!,
+                                              semesterSeq: semSeq,
+                                            ),
                                       );
                                     },
                                     icon: const Icon(Icons.add, size: 16),
@@ -1071,9 +1137,9 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                     child: Text(
                                       (c.code ?? "??").substring(0, 2),
                                       style: TextStyle(
-                                          color: Colors.blue.shade800,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold
+                                        color: Colors.blue.shade800,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
@@ -1083,7 +1149,9 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                       // Course Code
                                       Text(
                                         c.code ?? '-',
-                                        style: const TextStyle(fontWeight: FontWeight.w500),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                       if (lecturerName != null) ...[
                                         const SizedBox(width: 8),
@@ -1091,29 +1159,40 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                         const SizedBox(width: 8),
                                         // Lecturer Badge
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
-                                              color: Colors.amber.shade50,
-                                              borderRadius: BorderRadius.circular(4),
-                                              border: Border.all(color: Colors.amber.shade200)
+                                            color: Colors.amber.shade50,
+                                            borderRadius: BorderRadius.circular(
+                                              4,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.amber.shade200,
+                                            ),
                                           ),
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Icon(Icons.person, size: 12, color: Colors.amber.shade800),
+                                              Icon(
+                                                Icons.person,
+                                                size: 12,
+                                                color: Colors.amber.shade800,
+                                              ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 lecturerName,
                                                 style: TextStyle(
-                                                    fontSize: 11,
-                                                    color: Colors.amber.shade900,
-                                                    fontWeight: FontWeight.bold
+                                                  fontSize: 11,
+                                                  color: Colors.amber.shade900,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        )
-                                      ]
+                                        ),
+                                      ],
                                     ],
                                   ),
                                   trailing: IconButton(
@@ -1125,11 +1204,15 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                     ),
                                     onPressed: () {
                                       if (c.publicId != null) {
-                                        ref.read(curriculumControllerProvider.notifier)
+                                        ref
+                                            .read(
+                                              curriculumControllerProvider
+                                                  .notifier,
+                                            )
                                             .removeCourseFromProgram(
-                                          program.publicId!,
-                                          c.publicId!,
-                                        );
+                                              program.publicId!,
+                                              c.publicId!,
+                                            );
                                       }
                                     },
                                   ),

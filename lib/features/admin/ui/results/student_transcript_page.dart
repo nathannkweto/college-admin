@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// Import the generated API models
 import 'package:admin_api/api.dart' as admin;
-
-// Import the results providers we created
 import '../../providers/results_provider.dart';
 
 class StudentTranscriptPage extends ConsumerWidget {
@@ -18,7 +15,6 @@ class StudentTranscriptPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Watch the real API provider
     final transcriptAsync = ref.watch(studentTranscriptProvider(
         (studentId: studentPublicId, semesterId: semesterPublicId)
     ));
@@ -28,17 +24,19 @@ class StudentTranscriptPage extends ConsumerWidget {
       body: transcriptAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error loading transcript:\n$err', textAlign: TextAlign.center),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error loading transcript:\n$err', textAlign: TextAlign.center),
+              ],
+            ),
           ),
         ),
         data: (transcript) {
-          // The API response (StudentTranscript) usually contains the student object embedded
           final student = transcript.student;
 
           return SingleChildScrollView(
@@ -78,23 +76,14 @@ class StudentTranscriptPage extends ConsumerWidget {
                                 "ID: ${student?.studentId ?? 'N/A'}",
                                 style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w500),
                               ),
+                              const SizedBox(height: 4),
                               Text(
-                                "Standing: ${transcript.academicStanding ?? 'N/A'}",
+                                "Email: ${student?.email ?? 'N/A'}",
                                 style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                               ),
                             ],
                           ),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text("Semester GPA", style: TextStyle(fontSize: 12, color: Colors.grey)),
-                            Text(
-                              (transcript.semesterGpa ?? 0.0).toStringAsFixed(2),
-                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
-                            ),
-                          ],
-                        )
                       ],
                     ),
                   ),
@@ -134,7 +123,7 @@ class StudentTranscriptPage extends ConsumerWidget {
                                 children: [
                                   Text(res.courseCode ?? "-", style: const TextStyle(fontWeight: FontWeight.bold)),
                                   SizedBox(
-                                    width: 120, // Limit width for long names
+                                    width: 120,
                                     child: Text(
                                       res.courseName ?? "",
                                       style: const TextStyle(fontSize: 11, color: Colors.grey),
@@ -145,12 +134,12 @@ class StudentTranscriptPage extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          // Total Score
-                          DataCell(Text(res.totalScore?.toString() ?? "-")),
+                          // Score
+                          DataCell(Text(res.score?.toStringAsFixed(1) ?? "-")),
                           // Grade Letter
                           DataCell(Text(res.grade ?? "-", style: const TextStyle(fontWeight: FontWeight.w600))),
-                          // Pass/Fail Badge
-                          DataCell(_buildResultStatusBadge(res.status)),
+                          // Pass/Fail Badge (UPDATED LOGIC)
+                          DataCell(_buildResultStatusBadge(res.grade)),
                         ]);
                       }).toList(),
                     ),
@@ -164,38 +153,36 @@ class StudentTranscriptPage extends ConsumerWidget {
     );
   }
 
-  /// Helper to build the Pass/Fail badge safely from the API enum/object
-  Widget _buildResultStatusBadge(dynamic status) {
-    if (status == null) return const SizedBox();
+  /// Helper to calculate status since backend only returns Grade/Score now
+  Widget _buildResultStatusBadge(String? grade) {
+    if (grade == null) return const SizedBox();
 
-    // Safely convert API enum/string to uppercase string for checking
-    final statusStr = status.toString().toUpperCase();
-    final isPass = statusStr.contains('PASS');
-    final isFail = statusStr.contains('FAIL');
+    final gradeUpper = grade.toUpperCase();
 
-    Color bgColor = Colors.grey.shade100;
-    Color textColor = Colors.grey.shade800;
-    Color borderColor = Colors.grey.shade300;
-
-    if (isPass) {
-      bgColor = Colors.green.shade50;
-      textColor = Colors.green.shade800;
-      borderColor = Colors.green.shade200;
-    } else if (isFail) {
-      bgColor = Colors.red.shade50;
-      textColor = Colors.red.shade800;
-      borderColor = Colors.red.shade200;
+    // FIX: If pending, return nothing (empty widget)
+    if (gradeUpper == 'PENDING') {
+      return const SizedBox();
     }
 
+    // Logic: 'F' is fail, everything else is Pass
+    final isFail = gradeUpper == 'F';
+    // If it's not pending and not F, it's a pass
+    final isPass = !isFail;
+
+    Color bgColor = isPass ? Colors.green.shade50 : Colors.red.shade50;
+    Color textColor = isPass ? Colors.green.shade800 : Colors.red.shade800;
+    Color borderColor = isPass ? Colors.green.shade200 : Colors.red.shade200;
+    String text = isPass ? "PASS" : "FAIL";
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: borderColor),
       ),
       child: Text(
-        isPass ? "PASS" : (isFail ? "FAIL" : statusStr.split('.').last),
+        text,
         style: TextStyle(
           color: textColor,
           fontWeight: FontWeight.bold,

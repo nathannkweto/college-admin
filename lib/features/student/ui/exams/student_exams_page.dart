@@ -22,8 +22,9 @@ class StudentExamsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             const TabBar(
-              labelColor: Colors.green,
+              labelColor: Colors.blue,
               unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.blue,
               isScrollable: true,
               tabs: [
                 Tab(text: "Upcoming Exams"),
@@ -62,23 +63,38 @@ class StudentExamsPage extends ConsumerWidget {
           itemBuilder: (ctx, index) {
             final exam = exams[index];
 
-            // 1. FIX: Date formatting
+            // Safely parse date
             final dateStr = exam.date != null
                 ? DateFormat('MMM d, yyyy').format(exam.date!)
-                : "TBA";
+                : "Date TBA";
 
-            // 2. FIX: Property 'time' (was startTime)
-            final timeStr = exam.time ?? "TBA";
+            // Fallbacks for optional fields
+            final code = exam.code ?? "";
+            final title = exam.title ?? "Unknown Exam";
+            final timeStr = exam.time ?? "Time TBA";
+            final durationStr = exam.duration ?? ""; // e.g., "120 mins"
+            final location = exam.location ?? "Room TBA";
 
-            final location = exam.location ?? "TBA";
+            // Construct display title
+            final displayTitle = code.isNotEmpty ? "$code: $title" : title;
 
-            // 3. FIX: Property 'title' (was courseName)
-            final examTitle = exam.title ?? "Unknown Exam";
+            // Construct subtitle
+            final subtitleParts = [dateStr, timeStr];
+            if (durationStr.isNotEmpty) subtitleParts.add(durationStr);
+            subtitleParts.add(location);
 
             return ListTile(
-              leading: const Icon(Icons.event_note, color: Colors.green),
-              title: Text(examTitle),
-              subtitle: Text("$dateStr • $timeStr • $location"),
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.event_note, color: Colors.blue.shade700),
+              ),
+              title: Text(displayTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(subtitleParts.join(" • "), style: TextStyle(color: Colors.grey.shade600)),
             );
           },
         );
@@ -93,107 +109,103 @@ class StudentExamsPage extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text("Error loading transcript: $e")),
       data: (transcript) {
-        final semesters = transcript.semesters; // Correct list from model
+        final semesters = transcript.semesters ?? [];
 
         if (semesters.isEmpty) {
           return const Center(child: Text("No academic results available."));
         }
 
         return SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 4. FIX: Property 'gpa' (was cgpa)
-              if (transcript.gpa != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(
-                    "Cumulative GPA: ${transcript.gpa!.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
+            children: semesters.map((semester) {
+              final results = semester.results ?? [];
+              final semTitle = semester.semesterName ?? "Unknown Semester";
+
+              return Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.grey.shade200),
                 ),
-
-              // Render a Card for each Semester
-              ...semesters.map((semester) {
-                // 5. FIX: Property 'results' (was courses)
-                final results = semester.results;
-
-                // 6. FIX: Property 'semesterName' (was title)
-                final semTitle = semester.semesterName ?? "Unknown Semester";
-
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 24),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          semTitle,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                margin: const EdgeInsets.only(bottom: 24),
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        semTitle,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.black87,
                         ),
-                        const Divider(),
-                        Table(
-                          columnWidths: const {
-                            0: FlexColumnWidth(2),
-                            1: FlexColumnWidth(1),
-                            2: FlexColumnWidth(1),
-                          },
-                          children: [
-                            // Header Row
-                            const TableRow(
+                      ),
+                      const SizedBox(height: 16),
+                      Table(
+                        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                        columnWidths: const {
+                          0: FlexColumnWidth(3), // Course Name takes more space
+                          1: FlexColumnWidth(1), // Grade column
+                        },
+                        border: TableBorder(
+                          horizontalInside: BorderSide(color: Colors.grey.shade100),
+                        ),
+                        children: [
+                          // HEADER ROW
+                          const TableRow(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 12),
+                                child: Text("Course", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.only(bottom: 12),
+                                child: Text("Grade", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey), textAlign: TextAlign.right),
+                              ),
+                            ],
+                          ),
+                          // DATA ROWS
+                          ...results.map((result) {
+                            final grade = result.grade ?? "-";
+                            return TableRow(
                               children: [
                                 Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  child: Text(result.courseName ?? "---", style: const TextStyle(fontWeight: FontWeight.w500)),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                   child: Text(
-                                    "Course",
-                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                    grade,
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: _getGradeColor(grade),
+                                    ),
                                   ),
-                                ),
-                                Text(
-                                  "Grade",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                Text(
-                                  "Points",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
                                 ),
                               ],
-                            ),
-
-                            // Data Rows
-                            ...results.map((result) {
-                              // Note: inferred naming for inner result object properties.
-                              // If these red-line, check 'TranscriptSemestersInnerResultsInner' file.
-                              return TableRow(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 4),
-                                    child: Text(result.courseName ?? "---"),
-                                  ),
-                                  Text(result.grade ?? "-"),
-                                  Text((result.points ?? 0).toString()),
-                                ],
-                              );
-                            }),
-                          ],
-                        ),
-                      ],
-                    ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ],
                   ),
-                );
-              }),
-            ],
+                ),
+              );
+            }).toList(),
           ),
         );
       },
     );
+  }
+
+  Color _getGradeColor(String grade) {
+    if (grade == 'F' || grade == 'Repeat') return Colors.red;
+    if (grade == 'N/A') return Colors.grey;
+    return Colors.green.shade700;
   }
 }

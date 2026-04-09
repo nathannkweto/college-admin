@@ -231,6 +231,7 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
       int number,
       int weeks,
       DateTime startDate,
+      {bool isActive = true}
       ) async {
     return _perform(() async {
       final req = admin.SemestersPostRequest(
@@ -238,6 +239,7 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
         semesterNumber: number,
         lengthWeeks: weeks,
         startDate: DateTime(startDate.year, startDate.month, startDate.day),
+        isActive: isActive,
       );
 
       await ApiService().timetables.semestersPost(req);

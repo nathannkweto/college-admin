@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'dart:convert';
 import '../../providers/add_lecturer_provider.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:universal_html/html.dart' as html;
 
 // --- SEAMLESS STYLE HELPER ---
 InputDecoration _decor(String label, {IconData? icon}) => InputDecoration(
@@ -45,7 +47,7 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
   String? _selectedDepartmentId;
   String _selectedTitle = "Mr";
   String _selectedGender = "M";
-  DateTime _dob = DateTime(1980, 1, 1); // Default DOB ~45 years ago
+  DateTime _dob = DateTime(1980, 1, 1);
 
   PlatformFile? _selectedFile;
 
@@ -96,18 +98,18 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
     final success = await ref
         .read(addLecturerControllerProvider.notifier)
         .registerLecturer(
-      firstName: _firstNameController.text.trim(),
-      lastName: _lastNameController.text.trim(),
-      email: _emailController.text.trim(),
-      departmentPublicId: _selectedDepartmentId!,
-      title: _selectedTitle,
-      gender: _selectedGender,
-      // New Fields
-      phone: _phoneController.text.trim(),
-      nationalId: _nationalIdController.text.trim(),
-      address: _addressController.text.trim(),
-      dob: _dob,
-    );
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          email: _emailController.text.trim(),
+          departmentCode: _selectedDepartmentId!,
+          title: _selectedTitle,
+          gender: _selectedGender,
+          // New Fields
+          phoneNumber: _phoneController.text.trim(),
+          nrcNumber: _nationalIdController.text.trim(),
+          address: _addressController.text.trim(),
+          dateOfBirth: _dob,
+        );
 
     if (success && mounted) Navigator.pop(context, true);
   }
@@ -136,13 +138,25 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
     final csvContent = ref
         .read(addLecturerControllerProvider.notifier)
         .generateCsvTemplate();
-    final Uri uri = Uri.dataFromString(
-      csvContent,
-      mimeType: 'text/csv',
-      encoding: utf8,
-    );
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    if (kIsWeb) {
+      // --- WEB IMPLEMENTATION ---
+      final bytes = utf8.encode(csvContent);
+      final blob = html.Blob([bytes]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute("download", "lecturers.csv")
+        ..click();
+
+      html.Url.revokeObjectUrl(url); // Cleanup memory
+
+    } else {
+      // --- MOBILE IMPLEMENTATION (Future Proofing) ---
+      // When you eventually go mobile, put the path_provider/share logic here.
+      // For now, we can just print or show a snackbar.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Download not supported on mobile yet")),
+      );
     }
   }
 
@@ -236,9 +250,15 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                                     isExpanded: true,
                                     decoration: _decor("Title"),
                                     items: ["Mr", "Ms", "Mrs", "Dr", "Prof"]
-                                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                                        .map(
+                                          (t) => DropdownMenuItem(
+                                            value: t,
+                                            child: Text(t),
+                                          ),
+                                        )
                                         .toList(),
-                                    onChanged: (v) => setState(() => _selectedTitle = v!),
+                                    onChanged: (v) =>
+                                        setState(() => _selectedTitle = v!),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -266,8 +286,12 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                             // 2. Contact
                             TextFormField(
                               controller: _emailController,
-                              decoration: _decor("Email Address", icon: Icons.email_outlined),
-                              validator: (v) => v!.contains("@") ? null : "Invalid",
+                              decoration: _decor(
+                                "Email Address",
+                                icon: Icons.email_outlined,
+                              ),
+                              validator: (v) =>
+                                  v!.contains("@") ? null : "Invalid",
                             ),
                             const SizedBox(height: 16),
 
@@ -276,7 +300,10 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                                 Expanded(
                                   child: TextFormField(
                                     controller: _phoneController,
-                                    decoration: _decor("Phone", icon: Icons.phone_outlined),
+                                    decoration: _decor(
+                                      "Phone",
+                                      icon: Icons.phone_outlined,
+                                    ),
                                     validator: (v) => v!.isEmpty ? "Req" : null,
                                   ),
                                 ),
@@ -284,7 +311,10 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                                 Expanded(
                                   child: TextFormField(
                                     controller: _nationalIdController,
-                                    decoration: _decor("National ID", icon: Icons.badge_outlined),
+                                    decoration: _decor(
+                                      "National ID",
+                                      icon: Icons.badge_outlined,
+                                    ),
                                     validator: (v) => v!.isEmpty ? "Req" : null,
                                   ),
                                 ),
@@ -301,10 +331,17 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                                     value: _selectedGender,
                                     decoration: _decor("Gender"),
                                     items: const [
-                                      DropdownMenuItem(value: "M", child: Text("Male")),
-                                      DropdownMenuItem(value: "F", child: Text("Female")),
+                                      DropdownMenuItem(
+                                        value: "M",
+                                        child: Text("Male"),
+                                      ),
+                                      DropdownMenuItem(
+                                        value: "F",
+                                        child: Text("Female"),
+                                      ),
                                     ],
-                                    onChanged: (v) => setState(() => _selectedGender = v!),
+                                    onChanged: (v) =>
+                                        setState(() => _selectedGender = v!),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -313,7 +350,10 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                                   child: TextFormField(
                                     controller: _dobController,
                                     readOnly: true,
-                                    decoration: _decor("Date of Birth", icon: Icons.cake_outlined),
+                                    decoration: _decor(
+                                      "Date of Birth",
+                                      icon: Icons.cake_outlined,
+                                    ),
                                     onTap: _pickDob,
                                   ),
                                 ),
@@ -323,28 +363,43 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
 
                             departmentsAsync.when(
                               loading: () => const LinearProgressIndicator(),
-                              error: (e, _) => const Text("Error loading departments"),
-                              data: (departments) => DropdownButtonFormField<String>(
-                                value: _selectedDepartmentId,
-                                decoration: _decor("Department", icon: Icons.business_outlined),
-                                items: departments.map<DropdownMenuItem<String>>((d) {
-                                  // Adjust dynamic access if generated model differs
-                                  final dept = d as dynamic;
-                                  return DropdownMenuItem(
-                                    value: dept.publicId.toString(),
-                                    child: Text(dept.name.toString(), overflow: TextOverflow.ellipsis),
-                                  );
-                                }).toList(),
-                                onChanged: (v) => setState(() => _selectedDepartmentId = v),
-                                validator: (v) => v == null ? "Required" : null,
-                              ),
+                              error: (e, _) =>
+                                  const Text("Error loading departments"),
+                              data: (departments) =>
+                                  DropdownButtonFormField<String>(
+                                    value: _selectedDepartmentId,
+                                    decoration: _decor(
+                                      "Department",
+                                      icon: Icons.business_outlined,
+                                    ),
+                                    items: departments
+                                        .where((d) => d.code != null)
+                                        .map<DropdownMenuItem<String>>((d) {
+                                          return DropdownMenuItem(
+                                            value: d.code,
+                                            child: Text(
+                                              d.name.toString(),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          );
+                                        })
+                                        .toList(),
+                                    onChanged: (v) => setState(
+                                      () => _selectedDepartmentId = v,
+                                    ),
+                                    validator: (v) =>
+                                        v == null ? "Required" : null,
+                                  ),
                             ),
                             const SizedBox(height: 16),
 
                             // 4. Address
                             TextFormField(
                               controller: _addressController,
-                              decoration: _decor("Physical Address", icon: Icons.location_on_outlined),
+                              decoration: _decor(
+                                "Physical Address",
+                                icon: Icons.location_on_outlined,
+                              ),
                               maxLines: 2,
                               validator: (v) => v!.isEmpty ? "Req" : null,
                             ),
@@ -352,8 +407,12 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
 
                             // Action Buttons
                             _buildActionButtons(
-                              label: controllerState.isLoading ? "Saving..." : "Add Lecturer",
-                              onPressed: controllerState.isLoading ? null : _submitSingle,
+                              label: controllerState.isLoading
+                                  ? "Saving..."
+                                  : "Add Lecturer",
+                              onPressed: controllerState.isLoading
+                                  ? null
+                                  : _submitSingle,
                             ),
                           ],
                         ),
@@ -365,7 +424,11 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         children: [
-                          const Icon(Icons.upload_file_rounded, size: 64, color: Colors.blueGrey),
+                          const Icon(
+                            Icons.upload_file_rounded,
+                            size: 64,
+                            color: Colors.blueGrey,
+                          ),
                           const SizedBox(height: 16),
                           const Text(
                             "Upload CSV file for batch registration",
@@ -391,7 +454,9 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Icon(
-                                    _selectedFile != null ? Icons.check_circle : Icons.attach_file,
+                                    _selectedFile != null
+                                        ? Icons.check_circle
+                                        : Icons.attach_file,
                                     color: Colors.blue,
                                   ),
                                   const SizedBox(width: 12),
@@ -407,8 +472,12 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
                           ),
                           const Spacer(),
                           _buildActionButtons(
-                            label: controllerState.isLoading ? "Uploading..." : "Process Batch",
-                            onPressed: (controllerState.isLoading || _selectedFile == null)
+                            label: controllerState.isLoading
+                                ? "Uploading..."
+                                : "Process Batch",
+                            onPressed:
+                                (controllerState.isLoading ||
+                                    _selectedFile == null)
                                 ? null
                                 : _submitBatch,
                           ),
@@ -425,7 +494,10 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
     );
   }
 
-  Widget _buildActionButtons({required String label, required VoidCallback? onPressed}) {
+  Widget _buildActionButtons({
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -437,10 +509,15 @@ class _AddLecturerDialogState extends ConsumerState<AddLecturerDialog> {
               backgroundColor: Colors.blue.shade700,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: onPressed,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ),
         const SizedBox(height: 4),

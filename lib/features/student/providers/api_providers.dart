@@ -15,7 +15,6 @@ final studentProfileProvider = FutureProvider.autoDispose<StudentProfile>((ref) 
   final api = ref.watch(studentApiProvider);
   final response = await api.studentProfileGet();
 
-  // Access the .data property from the wrapper
   if (response?.data == null) {
     throw Exception('Failed to load profile data');
   }
@@ -27,19 +26,24 @@ final currentCoursesProvider = FutureProvider.autoDispose<List<CourseCompact>>((
   final api = ref.watch(studentApiProvider);
   final response = await api.studentCurrentCoursesGet();
 
-  // Access .data and convert to list
   return response?.data?.toList() ?? [];
 });
 
 // ==========================================
-// SCHEDULE (With 'scope' parameter)
+// SCHEDULE (Updated for Weekly View)
 // ==========================================
 
-final scheduleProvider = FutureProvider.autoDispose.family<List<ClassSession>, String>((ref, scope) async {
+final studentScheduleProvider = FutureProvider.autoDispose<List<DailySchedule>>((ref) async {
   final api = ref.watch(studentApiProvider);
-  final response = await api.studentScheduleGet(scope: scope);
 
-  return response?.data?.toList() ?? [];
+  // Calls the updated endpoint returning the weekly view
+  final response = await api.studentScheduleGet();
+
+  if (response == null || response.data == null) {
+    return [];
+  }
+
+  return response.data!.toList();
 });
 
 // ==========================================
@@ -66,6 +70,7 @@ final upcomingExamsProvider = FutureProvider.autoDispose<List<ExamEvent>>((ref) 
 
 final transcriptProvider = FutureProvider.autoDispose<Transcript>((ref) async {
   final api = ref.watch(studentApiProvider);
+  // Returns { data: { semesters: [...] } }
   final response = await api.studentResultsGet();
 
   if (response?.data == null) {

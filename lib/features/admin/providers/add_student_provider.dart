@@ -55,14 +55,14 @@ class AddStudentController extends StateNotifier<AddStudentState> {
     required String firstName,
     required String lastName,
     required String email,
-    required String programPublicId,
+    required String programCode,
     required String gender, // 'M' or 'F'
     required DateTime enrollmentDate,
     // --- NEW REQUIRED FIELDS ADDED BELOW ---
-    required String nationalId,
-    required DateTime dob,
+    required String nrcNumber,
+    required DateTime dateOfBirth,
     required String address,
-    required String phone,
+    required String phoneNumber,
   }) async {
     state = AddStudentState(isLoading: true);
 
@@ -77,14 +77,14 @@ class AddStudentController extends StateNotifier<AddStudentState> {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        programPublicId: programPublicId,
+        programCode: programCode,
         gender: genderEnum,
         enrollmentDate: enrollmentDate,
         // New Fields Mapped:
-        nationalId: nationalId,
-        dob: dob,
+        nrcNumber: nrcNumber,
+        dateOfBirth: dateOfBirth,
         address: address,
-        phone: phone,
+        phoneNumber: phoneNumber,
       );
 
       // Call API
@@ -140,7 +140,7 @@ class AddStudentController extends StateNotifier<AddStudentState> {
   // C. Helper for CSV Template
   // Updated to include all 10 required fields
   String generateCsvTemplate() {
-    return "first_name,last_name,email,program_public_id,gender,enrollment_date,national_id,dob,address,phone\n"
-        "John,Doe,john@college.edu,UUID-HERE,M,2025-09-01,NAT-123456,2000-01-01,123 Main St,+1234567890";
+    return "Last Name,First Name,ID (NRC/Passport),Gender (M/F),Date of Birth (yyyy-mm-dd),Address,Email Address,Phone Number (260*********),Program Code,\"Semester (1, 2, 3, etc)\",Enrollment Date (yyyy-mm-dd)\n"
+        "Doe,John,101010/10/1,M,2000-01-01,123 Main St,example@matem.edu,260123456789,APM,1,2025-09-01, DELETE THIS ROW";
   }
 }

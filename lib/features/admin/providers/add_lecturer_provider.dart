@@ -52,14 +52,14 @@ class AddLecturerController extends StateNotifier<AddLecturerState> {
     required String firstName,
     required String lastName,
     required String email,
-    required String departmentPublicId,
+    required String departmentCode,
     required String title, // 'Mr', 'Dr', 'Prof'
     required String gender, // 'M' or 'F'
     // --- NEW REQUIRED FIELDS ---
-    required String nationalId,
-    required DateTime dob,
+    required String nrcNumber,
+    required DateTime dateOfBirth,
     required String address,
-    required String phone,
+    required String phoneNumber,
   }) async {
     state = AddLecturerState(isLoading: true);
 
@@ -104,13 +104,13 @@ class AddLecturerController extends StateNotifier<AddLecturerState> {
         firstName: firstName,
         lastName: lastName,
         email: email,
-        departmentPublicId: departmentPublicId,
+        departmentCode: departmentCode,
         title: titleEnum,
         gender: genderEnum,
-        nationalId: nationalId,
-        dob: dob,
+        nrcNumber: nrcNumber,
+        dateOfBirth: dateOfBirth,
         address: address,
-        phone: phone,
+        phoneNumber: phoneNumber,
       );
 
       // 4. Call API
@@ -163,7 +163,7 @@ class AddLecturerController extends StateNotifier<AddLecturerState> {
 
   // C. CSV Template Helper
   String generateCsvTemplate() {
-    return "first_name,last_name,email,department_public_id,title,gender,national_id,dob,address,phone\n"
-        "Jane,Doe,jane@college.edu,UUID-HERE,Dr,F,NAT-987654,1980-05-20,456 Faculty Rd,+1987654321";
+    return "Last Name,First Name,ID (NRC/Passport),Gender (M/F),\"Title (Mr, Mrs, Dr, etc)\",Date of Birth (yyyy-mm-dd),Address,Email Address,Phone Number,\"Department Code (e.g. MAT, CS)\"\n"
+        "Banda,John,101010/10/1,M,Dr,1980-05-20,\"456 Great East Rd, Lusaka\",banda@example.com,260987654321,MAT, DELETE THIS ROW";
   }
 }

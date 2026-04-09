@@ -176,7 +176,7 @@ class _LecturersPageState extends ConsumerState<LecturersPage> {
                   ),
                 ),
                 DataCell(Text(lecturer.department?.name ?? 'Unassigned')),
-                DataCell(Text(lecturer.phone ?? 'N/A')),
+                DataCell(Text(lecturer.phoneNumber ?? 'N/A')),
                 DataCell(
                   IconButton(icon: const Icon(Icons.more_vert, size: 20), onPressed: () {}),
                 ),

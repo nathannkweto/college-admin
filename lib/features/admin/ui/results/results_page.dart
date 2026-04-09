@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:admin_api/api.dart' as admin;
 
-// 1. Import your central curriculum providers (contains semestersProvider, programsProvider)
+// 1. Import your central curriculum providers (Programs, Semesters)
 import '../../providers/curriculum_providers.dart';
 
-// 2. Import the Results Providers (for fetching student results & publishing)
+// 2. Import the Results Providers
 import '../../providers/results_provider.dart';
 
 // 3. Import the Transcript Page
@@ -21,9 +21,16 @@ class ResultsManagementPage extends ConsumerStatefulWidget {
 class _ResultsManagementPageState extends ConsumerState<ResultsManagementPage> {
   String? _selectedSemesterId;
 
+  // --- HELPER: Safely generate the label ---
+  String _getSemesterLabel(admin.Semester sem) {
+    final year = sem.academicYear ?? "Unknown Year";
+    // Since schema defines this as integer, we can just toString() it safely.
+    final number = sem.semesterNumber?.toString() ?? "?";
+    return "$year - Semester $number";
+  }
+
   @override
   Widget build(BuildContext context) {
-    // USE REAL DATA: Watch the semestersProvider from curriculum_providers.dart
     final semestersAsync = ref.watch(semestersProvider);
 
     return Scaffold(
@@ -35,14 +42,9 @@ class _ResultsManagementPageState extends ConsumerState<ResultsManagementPage> {
             padding: const EdgeInsets.all(16.0),
             child: semestersAsync.when(
               loading: () => const LinearProgressIndicator(),
-              error: (err, _) => Text("Error loading semesters: $err", style: const TextStyle(color: Colors.red)),
+              error: (err, _) => Text("Error: $err", style: const TextStyle(color: Colors.red)),
               data: (semesters) {
-                if (semesters.isEmpty) {
-                  return const Text("No semesters found.");
-                }
-
-                // If no semester is selected yet, optionally auto-select the first one (or active one)
-                // For now, we leave it null until user selects.
+                if (semesters.isEmpty) return const Text("No semesters found.");
 
                 return DropdownButtonFormField<String>(
                   decoration: const InputDecoration(
@@ -53,7 +55,7 @@ class _ResultsManagementPageState extends ConsumerState<ResultsManagementPage> {
                   items: semesters.map((sem) {
                     return DropdownMenuItem(
                       value: sem.publicId,
-                      child: Text("${sem.academicYear} - Semester ${sem.semesterNumber}"),
+                      child: Text(_getSemesterLabel(sem)),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -64,7 +66,7 @@ class _ResultsManagementPageState extends ConsumerState<ResultsManagementPage> {
             ),
           ),
 
-          // 2. Program List (Only show if semester is selected)
+          // 2. Program List
           if (_selectedSemesterId != null)
             Expanded(
               child: _ProgramList(semesterId: _selectedSemesterId!),
@@ -94,16 +96,13 @@ class _ProgramList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // USE REAL DATA: Watch the programsProvider from curriculum_providers.dart
     final programsAsync = ref.watch(programsProvider);
 
     return programsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (err, _) => Center(child: Text("Error loading programs: $err")),
+      error: (err, _) => Center(child: Text("Error: $err")),
       data: (programs) {
-        if (programs.isEmpty) {
-          return const Center(child: Text("No programs found in the system."));
-        }
+        if (programs.isEmpty) return const Center(child: Text("No programs found."));
 
         return ListView.builder(
           itemCount: programs.length,
@@ -134,13 +133,11 @@ class _ProgramResultExpansionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 1. Fetch real results for this specific program/semester combo
-    // (This comes from results_providers.dart)
+    // Watch specific program results
     final resultsAsync = ref.watch(programResultsProvider(
         (programId: programId, semesterId: semesterId)
     ));
 
-    // 2. Watch publishing state
     final publishState = ref.watch(publishResultControllerProvider);
 
     return Card(
@@ -165,7 +162,7 @@ class _ProgramResultExpansionTile extends ConsumerWidget {
               ),
             ],
           ),
-          loading: () => const Text("Loading status...", style: TextStyle(fontSize: 12)),
+          loading: () => const Text("Loading...", style: TextStyle(fontSize: 12)),
           error: (_,__) => const Text("Error", style: TextStyle(fontSize: 12, color: Colors.red)),
         ),
         children: [
@@ -201,7 +198,7 @@ class _ProgramResultExpansionTile extends ConsumerWidget {
                       children: [
                         Text("${students.length} Students", style: const TextStyle(fontWeight: FontWeight.bold)),
 
-                        // Publish Button
+                        // Publish Button Logic
                         if (!isPublished)
                           ElevatedButton.icon(
                             onPressed: publishState.isLoading
@@ -215,7 +212,7 @@ class _ProgramResultExpansionTile extends ConsumerWidget {
                                 : const Icon(Icons.send, size: 18),
                             label: const Text("Publish Results"),
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
+                                backgroundColor: Colors.blueAccent,
                                 foregroundColor: Colors.white
                             ),
                           )
@@ -245,9 +242,9 @@ class _ProgramResultExpansionTile extends ConsumerWidget {
                         ],
                         rows: students.map((student) {
                           return DataRow(
+                            // Navigation to Transcript
                               onSelectChanged: (_) {
                                 if (student.studentPublicId == null) return;
-
                                 Navigator.push(context, MaterialPageRoute(builder: (_) =>
                                     StudentTranscriptPage(
                                         studentPublicId: student.studentPublicId!,
@@ -275,8 +272,6 @@ class _ProgramResultExpansionTile extends ConsumerWidget {
       ),
     );
   }
-
-  // --- Helper Widgets ---
 
   Widget _buildStatusBadge(String status) {
     final cleanStatus = status.contains('.') ? status.split('.').last.toUpperCase() : status.toUpperCase();
