@@ -11,7 +11,7 @@
 part of lecturer_api;
 
 class ApiClient {
-  ApiClient({this.basePath = 'https://api.college.edu/api/v1/lecturer', this.authentication,});
+  ApiClient({this.basePath = 'https://college-app-316955810695.us-east1.run.app/api/v1/lecturer', this.authentication,});
 
   final String basePath;
   final Authentication? authentication;

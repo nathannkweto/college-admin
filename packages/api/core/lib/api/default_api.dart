@@ -27,7 +27,7 @@ class DefaultApi {
   /// * [LoginRequest] loginRequest:
   Future<Response> loginWithHttpInfo({ LoginRequest? loginRequest, }) async {
     // ignore: prefer_const_declarations
-    final path = r'/login';
+    final path = r'/auth/login';
 
     // ignore: prefer_final_locals
     Object? postBody = loginRequest;

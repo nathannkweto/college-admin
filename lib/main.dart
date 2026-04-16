@@ -8,10 +8,16 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize API Service Global (Singleton)
-  ApiService().init(baseUrl: Config.baseUrl);
+  ApiService().init(
+    baseUrl: Config.baseUrl,
+  );
+
+  // 🔍 DEBUG LOGS (VERY IMPORTANT)
+  print('================ APP START ================');
+  print('CONFIG.baseUrl => ${Config.baseUrl}');
+  print('===========================================');
 
   runApp(
-    // Wrap the entire app in ProviderScope
     const ProviderScope(
       child: CollegeApp(),
     ),

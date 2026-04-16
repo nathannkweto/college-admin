@@ -11,7 +11,7 @@
 part of core_api;
 
 class ApiClient {
-  ApiClient({this.basePath = 'http://localhost', this.authentication,});
+  ApiClient({this.basePath = 'https://college-app-316955810695.us-east1.run.app/api/v1', this.authentication,});
 
   final String basePath;
   final Authentication? authentication;
