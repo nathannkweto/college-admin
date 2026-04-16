@@ -1,6 +1,6 @@
 class Config {
   static const baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://api.matemcollege.com/api/v1',
+    defaultValue: 'https://college-app-316955810695.us-east1.run.app/api/v1',
   );
 }

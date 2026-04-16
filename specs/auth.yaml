@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 
 servers:
-  - url: https://api.college.edu/api/v1/auth
+  - url: https://college-app-316955810695.us-east1.run.app/api/v1/auth
 
 paths:
   /auth/login:
