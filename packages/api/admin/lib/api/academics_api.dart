@@ -10,7 +10,6 @@
 
 part of admin_api;
 
-
 class AcademicsApi {
   AcademicsApi([ApiClient? apiClient]) : apiClient = apiClient ?? defaultApiClient;
 
