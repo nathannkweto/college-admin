@@ -5,7 +5,7 @@
 import 'package:admin_api/api.dart';
 ```
 
-All URIs are relative to *https://api.college.edu/api/v1/admin*
+All URIs are relative to *https://college-app-316955810695.us-east1.run.app/api/v1/admin*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -64,7 +64,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **resultsPublishPost**
-> ResultsPublishPost200Response resultsPublishPost(resultsPublishPostRequest)
+> CoursesDelete200Response resultsPublishPost(resultsPublishPostRequest)
 
 Publish results for a specific program and semester
 
@@ -97,7 +97,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ResultsPublishPost200Response**](ResultsPublishPost200Response.md)
+[**CoursesDelete200Response**](CoursesDelete200Response.md)
 
 ### Authorization
 

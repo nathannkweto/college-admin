@@ -544,6 +544,56 @@ paths:
         "201":
           description: Created
 
+  /departments/{public_id}:
+    put:
+      tags: [Academics]
+      summary: Update a department
+      operationId: departmentsUpdate
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Department"
+    delete:
+      tags: [Academics]
+      summary: Delete a department
+      operationId: departmentsDelete
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Deleted
+
   /qualifications:
     get:
       tags: [Academics]
@@ -757,6 +807,73 @@ paths:
         "201":
           description: Created
 
+  /courses/{public_id}:
+    put:
+      tags: [Academics]
+      summary: Update an existing course
+      operationId: coursesUpdate
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                department_public_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Course updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Course"
+        "404":
+          description: Course not found
+        "422":
+          description: Validation Error
+
+    delete:
+      tags: [Academics]
+      summary: Delete a course
+      operationId: coursesDelete
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Course deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "404":
+          description: Course not found
+
   # --- STUDENTS ---
   /students:
     get:
@@ -895,6 +1012,102 @@ paths:
         "200":
           description: Job started
 
+  /students/{public_id}:
+    get:
+      tags: [Students]
+      summary: Get a student by ID
+      operationId: studentsShow
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Student"
+        "404":
+          description: Student not found
+    put:
+      tags: [Students]
+      summary: Update a student
+      operationId: studentsUpdate
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                program_code:
+                  type: string
+                gender:
+                  type: string
+                  enum: [M, F]
+                enrollment_date:
+                  type: string
+                  format: date
+                nrc_number:
+                  type: string
+                date_of_birth:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                phone_number:
+                  type: string
+                status:
+                  type: string
+                  enum: [active, inactive, graduated, suspended]
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Student"
+    delete:
+      tags: [Students]
+      summary: Delete a student
+      operationId: studentsDelete
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Deleted
+
   # --- LECTURERS ---
   /lecturers:
     get:
@@ -978,6 +1191,98 @@ paths:
         "200":
           description: Queued
 
+  /lecturers/{public_id}:
+    get:
+      tags: [Lecturers]
+      summary: Get a lecturer by ID
+      operationId: lecturersShow
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: "#/components/schemas/Lecturer"
+        "404":
+          description: Lecturer not found
+    put:
+      tags: [Lecturers]
+      summary: Update a lecturer
+      operationId: lecturersUpdate
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                department_code:
+                  type: string
+                title:
+                  type: string
+                  enum: [Mr, Ms, Mrs, Dr, Prof]
+                gender:
+                  type: string
+                  enum: [M, F]
+                nrc_number:
+                  type: string
+                date_of_birth:
+                  type: string
+                  format: date
+                address:
+                  type: string
+                phone_number:
+                  type: string
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: "#/components/schemas/Lecturer"
+    delete:
+      tags: [Lecturers]
+      summary: Delete a lecturer
+      operationId: lecturersDelete
+      parameters:
+        - name: public_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Deleted
 
   # --- LOGISTICS ---
   /semesters:

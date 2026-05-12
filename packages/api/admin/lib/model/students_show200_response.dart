@@ -8,12 +8,12 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of admin_api;
+part of openapi.api;
 
-class ResultsPublishPost200Response {
-  /// Returns a new [ResultsPublishPost200Response] instance.
-  ResultsPublishPost200Response({
-    this.message,
+class StudentsShow200Response {
+  /// Returns a new [StudentsShow200Response] instance.
+  StudentsShow200Response({
+    this.data,
   });
 
   ///
@@ -22,34 +22,34 @@ class ResultsPublishPost200Response {
   /// source code must fall back to having a nullable type.
   /// Consider adding a "default:" property in the specification file to hide this note.
   ///
-  String? message;
+  Student? data;
 
   @override
-  bool operator ==(Object other) => identical(this, other) || other is ResultsPublishPost200Response &&
-    other.message == message;
+  bool operator ==(Object other) => identical(this, other) || other is StudentsShow200Response &&
+    other.data == data;
 
   @override
   int get hashCode =>
     // ignore: unnecessary_parenthesis
-    (message == null ? 0 : message!.hashCode);
+    (data == null ? 0 : data!.hashCode);
 
   @override
-  String toString() => 'ResultsPublishPost200Response[message=$message]';
+  String toString() => 'StudentsShow200Response[data=$data]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
-    if (this.message != null) {
-      json[r'message'] = this.message;
+    if (this.data != null) {
+      json[r'data'] = this.data;
     } else {
-      json[r'message'] = null;
+      json[r'data'] = null;
     }
     return json;
   }
 
-  /// Returns a new [ResultsPublishPost200Response] instance and imports its values from
+  /// Returns a new [StudentsShow200Response] instance and imports its values from
   /// [value] if it's a [Map], null otherwise.
   // ignore: prefer_constructors_over_static_methods
-  static ResultsPublishPost200Response? fromJson(dynamic value) {
+  static StudentsShow200Response? fromJson(dynamic value) {
     if (value is Map) {
       final json = value.cast<String, dynamic>();
 
@@ -58,24 +58,24 @@ class ResultsPublishPost200Response {
       // Note 2: this code is stripped in release mode!
       assert(() {
         requiredKeys.forEach((key) {
-          assert(json.containsKey(key), 'Required key "ResultsPublishPost200Response[$key]" is missing from JSON.');
-          assert(json[key] != null, 'Required key "ResultsPublishPost200Response[$key]" has a null value in JSON.');
+          assert(json.containsKey(key), 'Required key "StudentsShow200Response[$key]" is missing from JSON.');
+          assert(json[key] != null, 'Required key "StudentsShow200Response[$key]" has a null value in JSON.');
         });
         return true;
       }());
 
-      return ResultsPublishPost200Response(
-        message: mapValueOfType<String>(json, r'message'),
+      return StudentsShow200Response(
+        data: Student.fromJson(json[r'data']),
       );
     }
     return null;
   }
 
-  static List<ResultsPublishPost200Response> listFromJson(dynamic json, {bool growable = false,}) {
-    final result = <ResultsPublishPost200Response>[];
+  static List<StudentsShow200Response> listFromJson(dynamic json, {bool growable = false,}) {
+    final result = <StudentsShow200Response>[];
     if (json is List && json.isNotEmpty) {
       for (final row in json) {
-        final value = ResultsPublishPost200Response.fromJson(row);
+        final value = StudentsShow200Response.fromJson(row);
         if (value != null) {
           result.add(value);
         }
@@ -84,12 +84,12 @@ class ResultsPublishPost200Response {
     return result.toList(growable: growable);
   }
 
-  static Map<String, ResultsPublishPost200Response> mapFromJson(dynamic json) {
-    final map = <String, ResultsPublishPost200Response>{};
+  static Map<String, StudentsShow200Response> mapFromJson(dynamic json) {
+    final map = <String, StudentsShow200Response>{};
     if (json is Map && json.isNotEmpty) {
       json = json.cast<String, dynamic>(); // ignore: parameter_assignments
       for (final entry in json.entries) {
-        final value = ResultsPublishPost200Response.fromJson(entry.value);
+        final value = StudentsShow200Response.fromJson(entry.value);
         if (value != null) {
           map[entry.key] = value;
         }
@@ -98,14 +98,14 @@ class ResultsPublishPost200Response {
     return map;
   }
 
-  // maps a json object with a list of ResultsPublishPost200Response-objects as value to a dart map
-  static Map<String, List<ResultsPublishPost200Response>> mapListFromJson(dynamic json, {bool growable = false,}) {
-    final map = <String, List<ResultsPublishPost200Response>>{};
+  // maps a json object with a list of StudentsShow200Response-objects as value to a dart map
+  static Map<String, List<StudentsShow200Response>> mapListFromJson(dynamic json, {bool growable = false,}) {
+    final map = <String, List<StudentsShow200Response>>{};
     if (json is Map && json.isNotEmpty) {
       // ignore: parameter_assignments
       json = json.cast<String, dynamic>();
       for (final entry in json.entries) {
-        map[entry.key] = ResultsPublishPost200Response.listFromJson(entry.value, growable: growable,);
+        map[entry.key] = StudentsShow200Response.listFromJson(entry.value, growable: growable,);
       }
     }
     return map;

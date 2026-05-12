@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of admin_api;
+part of openapi.api;
 
 class QualificationsGet200Response {
   /// Returns a new [QualificationsGet200Response] instance.

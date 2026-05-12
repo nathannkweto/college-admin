@@ -24,6 +24,13 @@ void main() {
       // TODO
     });
 
+    // Delete a student
+    //
+    //Future studentsDelete(String publicId) async
+    test('test studentsDelete', () async {
+      // TODO
+    });
+
     //Future<StudentsGet200Response> studentsGet({ String programPublicId, String search }) async
     test('test studentsGet', () async {
       // TODO
@@ -41,6 +48,20 @@ void main() {
 
     //Future<StudentsPromotionPreview200Response> studentsPromotionPreview() async
     test('test studentsPromotionPreview', () async {
+      // TODO
+    });
+
+    // Get a student by ID
+    //
+    //Future<StudentsShow200Response> studentsShow(String publicId) async
+    test('test studentsShow', () async {
+      // TODO
+    });
+
+    // Update a student
+    //
+    //Future<StudentsUpdate200Response> studentsUpdate(String publicId, StudentsUpdateRequest studentsUpdateRequest) async
+    test('test studentsUpdate', () async {
       // TODO
     });
 

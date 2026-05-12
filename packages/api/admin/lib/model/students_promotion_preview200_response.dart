@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of admin_api;
+part of openapi.api;
 
 class StudentsPromotionPreview200Response {
   /// Returns a new [StudentsPromotionPreview200Response] instance.

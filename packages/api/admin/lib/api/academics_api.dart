@@ -8,12 +8,66 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of admin_api;
+part of openapi.api;
+
 
 class AcademicsApi {
   AcademicsApi([ApiClient? apiClient]) : apiClient = apiClient ?? defaultApiClient;
 
   final ApiClient apiClient;
+
+  /// Delete a course
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<Response> coursesDeleteWithHttpInfo(String publicId,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/courses/{public_id}'
+      .replaceAll('{public_id}', publicId);
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'DELETE',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Delete a course
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<CoursesDelete200Response?> coursesDelete(String publicId,) async {
+    final response = await coursesDeleteWithHttpInfo(publicId,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'CoursesDelete200Response',) as CoursesDelete200Response;
+    
+    }
+    return null;
+  }
 
   /// Performs an HTTP 'GET /courses' operation and returns the [Response].
   Future<Response> coursesGetWithHttpInfo() async {
@@ -90,6 +144,108 @@ class AcademicsApi {
   /// * [CoursesPostRequest] coursesPostRequest (required):
   Future<void> coursesPost(CoursesPostRequest coursesPostRequest,) async {
     final response = await coursesPostWithHttpInfo(coursesPostRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+  }
+
+  /// Update an existing course
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  ///
+  /// * [CoursesUpdateRequest] coursesUpdateRequest (required):
+  Future<Response> coursesUpdateWithHttpInfo(String publicId, CoursesUpdateRequest coursesUpdateRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/courses/{public_id}'
+      .replaceAll('{public_id}', publicId);
+
+    // ignore: prefer_final_locals
+    Object? postBody = coursesUpdateRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'PUT',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Update an existing course
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  ///
+  /// * [CoursesUpdateRequest] coursesUpdateRequest (required):
+  Future<CoursesUpdate200Response?> coursesUpdate(String publicId, CoursesUpdateRequest coursesUpdateRequest,) async {
+    final response = await coursesUpdateWithHttpInfo(publicId, coursesUpdateRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'CoursesUpdate200Response',) as CoursesUpdate200Response;
+    
+    }
+    return null;
+  }
+
+  /// Delete a department
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<Response> departmentsDeleteWithHttpInfo(String publicId,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/departments/{public_id}'
+      .replaceAll('{public_id}', publicId);
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'DELETE',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Delete a department
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<void> departmentsDelete(String publicId,) async {
+    final response = await departmentsDeleteWithHttpInfo(publicId,);
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -173,6 +329,63 @@ class AcademicsApi {
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
+  }
+
+  /// Update a department
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  ///
+  /// * [DepartmentsUpdateRequest] departmentsUpdateRequest (required):
+  Future<Response> departmentsUpdateWithHttpInfo(String publicId, DepartmentsUpdateRequest departmentsUpdateRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/departments/{public_id}'
+      .replaceAll('{public_id}', publicId);
+
+    // ignore: prefer_final_locals
+    Object? postBody = departmentsUpdateRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'PUT',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Update a department
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  ///
+  /// * [DepartmentsUpdateRequest] departmentsUpdateRequest (required):
+  Future<DepartmentsUpdate200Response?> departmentsUpdate(String publicId, DepartmentsUpdateRequest departmentsUpdateRequest,) async {
+    final response = await departmentsUpdateWithHttpInfo(publicId, departmentsUpdateRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'DepartmentsUpdate200Response',) as DepartmentsUpdate200Response;
+    
+    }
+    return null;
   }
 
   /// Performs an HTTP 'DELETE /programs/{public_id}/courses/{course_public_id}' operation and returns the [Response].

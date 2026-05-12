@@ -17,6 +17,13 @@ void main() {
   // final instance = AcademicsApi();
 
   group('tests for AcademicsApi', () {
+    // Delete a course
+    //
+    //Future<CoursesDelete200Response> coursesDelete(String publicId) async
+    test('test coursesDelete', () async {
+      // TODO
+    });
+
     //Future<CoursesGet200Response> coursesGet() async
     test('test coursesGet', () async {
       // TODO
@@ -27,6 +34,20 @@ void main() {
       // TODO
     });
 
+    // Update an existing course
+    //
+    //Future<CoursesUpdate200Response> coursesUpdate(String publicId, CoursesUpdateRequest coursesUpdateRequest) async
+    test('test coursesUpdate', () async {
+      // TODO
+    });
+
+    // Delete a department
+    //
+    //Future departmentsDelete(String publicId) async
+    test('test departmentsDelete', () async {
+      // TODO
+    });
+
     //Future<DepartmentsGet200Response> departmentsGet() async
     test('test departmentsGet', () async {
       // TODO
@@ -34,6 +55,13 @@ void main() {
 
     //Future departmentsPost(DepartmentsPostRequest departmentsPostRequest) async
     test('test departmentsPost', () async {
+      // TODO
+    });
+
+    // Update a department
+    //
+    //Future<DepartmentsUpdate200Response> departmentsUpdate(String publicId, DepartmentsUpdateRequest departmentsUpdateRequest) async
+    test('test departmentsUpdate', () async {
       // TODO
     });
 

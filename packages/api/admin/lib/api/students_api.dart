@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of admin_api;
+part of openapi.api;
 
 
 class StudentsApi {
@@ -65,6 +65,51 @@ class StudentsApi {
   /// * [MultipartFile] file (required):
   Future<void> studentsBatchUploadPost(MultipartFile file,) async {
     final response = await studentsBatchUploadPostWithHttpInfo(file,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+  }
+
+  /// Delete a student
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<Response> studentsDeleteWithHttpInfo(String publicId,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/students/{public_id}'
+      .replaceAll('{public_id}', publicId);
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'DELETE',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Delete a student
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<void> studentsDelete(String publicId,) async {
+    final response = await studentsDeleteWithHttpInfo(publicId,);
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
     }
@@ -242,6 +287,116 @@ class StudentsApi {
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
       return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'StudentsPromotionPreview200Response',) as StudentsPromotionPreview200Response;
+    
+    }
+    return null;
+  }
+
+  /// Get a student by ID
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<Response> studentsShowWithHttpInfo(String publicId,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/students/{public_id}'
+      .replaceAll('{public_id}', publicId);
+
+    // ignore: prefer_final_locals
+    Object? postBody;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>[];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'GET',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Get a student by ID
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  Future<StudentsShow200Response?> studentsShow(String publicId,) async {
+    final response = await studentsShowWithHttpInfo(publicId,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'StudentsShow200Response',) as StudentsShow200Response;
+    
+    }
+    return null;
+  }
+
+  /// Update a student
+  ///
+  /// Note: This method returns the HTTP [Response].
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  ///
+  /// * [StudentsUpdateRequest] studentsUpdateRequest (required):
+  Future<Response> studentsUpdateWithHttpInfo(String publicId, StudentsUpdateRequest studentsUpdateRequest,) async {
+    // ignore: prefer_const_declarations
+    final path = r'/students/{public_id}'
+      .replaceAll('{public_id}', publicId);
+
+    // ignore: prefer_final_locals
+    Object? postBody = studentsUpdateRequest;
+
+    final queryParams = <QueryParam>[];
+    final headerParams = <String, String>{};
+    final formParams = <String, String>{};
+
+    const contentTypes = <String>['application/json'];
+
+
+    return apiClient.invokeAPI(
+      path,
+      'PUT',
+      queryParams,
+      postBody,
+      headerParams,
+      formParams,
+      contentTypes.isEmpty ? null : contentTypes.first,
+    );
+  }
+
+  /// Update a student
+  ///
+  /// Parameters:
+  ///
+  /// * [String] publicId (required):
+  ///
+  /// * [StudentsUpdateRequest] studentsUpdateRequest (required):
+  Future<StudentsUpdate200Response?> studentsUpdate(String publicId, StudentsUpdateRequest studentsUpdateRequest,) async {
+    final response = await studentsUpdateWithHttpInfo(publicId, studentsUpdateRequest,);
+    if (response.statusCode >= HttpStatus.badRequest) {
+      throw ApiException(response.statusCode, await _decodeBodyBytes(response));
+    }
+    // When a remote server returns no body with a status of 204, we shall not decode it.
+    // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
+    // FormatException when trying to decode an empty string.
+    if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'StudentsUpdate200Response',) as StudentsUpdate200Response;
     
     }
     return null;

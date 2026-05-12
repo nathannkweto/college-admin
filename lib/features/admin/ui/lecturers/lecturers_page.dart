@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:admin_api/api.dart' as admin;
 import 'package:college_admin/core/services/api_service.dart';
+
+import '../../../../shared/widgets/error_view.dart'; // Shared widget
 import 'add_lecturer_dialog.dart';
+import 'lecturer_details_page.dart';
+import '../widgets/lecturer_data_table.dart';
+import '../widgets/lecturer_mobile_list.dart';
 
 // --- PROVIDER ---
-// Moving from manual JSON decoding to using the generated API client
 final lecturersListProvider = FutureProvider.autoDispose<List<admin.Lecturer>>((ref) async {
   final response = await ApiService().lecturers.lecturersGet();
-  // Based on your YAML, the response contains a 'data' field which is a List<Lecturer>
   return response?.data ?? [];
 });
 
@@ -21,7 +24,7 @@ class LecturersPage extends ConsumerStatefulWidget {
 
 class _LecturersPageState extends ConsumerState<LecturersPage> {
   int _currentPage = 1;
-  final int _limit = 15; // Set to 15 to match your Laravel pagination
+  final int _limit = 15; 
 
   void _onPageChanged(int newPage) {
     setState(() => _currentPage = newPage);
@@ -47,6 +50,15 @@ class _LecturersPageState extends ConsumerState<LecturersPage> {
     }
   }
 
+  void _navigateToDetails(String publicId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LecturerDetailsPage(publicId: publicId),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final lecturersAsync = ref.watch(lecturersListProvider);
@@ -65,10 +77,14 @@ class _LecturersPageState extends ConsumerState<LecturersPage> {
             Expanded(
               child: lecturersAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => _buildErrorState(err.toString()),
+                error: (err, _) => ErrorView(
+                  error: err.toString(),
+                  onRetry: () => ref.invalidate(lecturersListProvider),
+                ),
                 data: (allLecturers) {
                   if (allLecturers.isEmpty) return _buildEmptyState();
 
+                  // Pagination Logic
                   final startIndex = (_currentPage - 1) * _limit;
                   final endIndex = (startIndex + _limit < allLecturers.length)
                       ? startIndex + _limit
@@ -83,8 +99,14 @@ class _LecturersPageState extends ConsumerState<LecturersPage> {
                     children: [
                       Expanded(
                         child: isMobile
-                            ? _buildMobileList(paginatedLecturers)
-                            : _buildDataTable(paginatedLecturers),
+                            ? LecturerMobileList(
+                                lecturers: paginatedLecturers,
+                                onRowTap: _navigateToDetails,
+                              )
+                            : LecturerDataTable(
+                                lecturers: paginatedLecturers,
+                                onRowTap: _navigateToDetails,
+                              ),
                       ),
                       if (allLecturers.length > _limit)
                         _buildPagination(allLecturers.length, endIndex),
@@ -109,10 +131,7 @@ class _LecturersPageState extends ConsumerState<LecturersPage> {
             children: [
               Text(
                 "Lecturers",
-                style: TextStyle(
-                  fontSize: isMobile ? 22 : 28,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: isMobile ? 22 : 28, fontWeight: FontWeight.bold),
               ),
               const Text("Manage faculty members and departments", style: TextStyle(color: Colors.grey)),
             ],
@@ -132,95 +151,6 @@ class _LecturersPageState extends ConsumerState<LecturersPage> {
     );
   }
 
-  // DESKTOP: Type-safe DataTable
-  Widget _buildDataTable(List<admin.Lecturer> lecturers) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: SingleChildScrollView(
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
-          columns: const [
-            DataColumn(label: Text("Lecturer ID")),
-            DataColumn(label: Text("Name")),
-            DataColumn(label: Text("Department")),
-            DataColumn(label: Text("Phone")),
-            DataColumn(label: Text("Actions")),
-          ],
-          rows: lecturers.map((lecturer) {
-            // Using generated model fields (camelCase)
-            final String title = lecturer.title?.value ?? "";
-            final String fullName = "$title ${lecturer.firstName ?? ''} ${lecturer.lastName ?? ''}".trim();
-
-            return DataRow(
-              cells: [
-                DataCell(Text(lecturer.lecturerId ?? 'N/A', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 14,
-                        backgroundColor: Colors.blue.shade50,
-                        child: Text(
-                          lecturer.firstName != null ? lecturer.firstName![0].toUpperCase() : "?",
-                          style: const TextStyle(fontSize: 12, color: Colors.blue),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(fullName),
-                    ],
-                  ),
-                ),
-                DataCell(Text(lecturer.department?.name ?? 'Unassigned')),
-                DataCell(Text(lecturer.phoneNumber ?? 'N/A')),
-                DataCell(
-                  IconButton(icon: const Icon(Icons.more_vert, size: 20), onPressed: () {}),
-                ),
-              ],
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
-  // MOBILE: Vertical List
-  Widget _buildMobileList(List<admin.Lecturer> lecturers) {
-    return ListView.builder(
-      itemCount: lecturers.length,
-      itemBuilder: (context, index) {
-        final lecturer = lecturers[index];
-        final fullName = "${lecturer.title?.value ?? ''} ${lecturer.firstName ?? ''} ${lecturer.lastName ?? ''}";
-
-        return Card(
-          elevation: 0,
-          margin: const EdgeInsets.only(bottom: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: Colors.grey.shade200),
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blue.shade100,
-              child: Text(lecturer.firstName != null ? lecturer.firstName![0].toUpperCase() : "?"),
-            ),
-            title: Text(fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text("${lecturer.lecturerId}\n${lecturer.department?.name ?? 'No Dept'}"),
-            isThreeLine: true,
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
-          ),
-        );
-      },
-    );
-  }
-
-  // --- HELPER STATES ---
-
   Widget _buildPagination(int total, int currentEnd) {
     final int totalPages = (total / _limit).ceil();
     return Padding(
@@ -239,22 +169,6 @@ class _LecturersPageState extends ConsumerState<LecturersPage> {
             icon: const Icon(Icons.chevron_right),
             onPressed: _currentPage < totalPages ? () => _onPageChanged(_currentPage + 1) : null,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState(String error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
-          const SizedBox(height: 16),
-          const Text("Error loading data", style: TextStyle(fontWeight: FontWeight.bold)),
-          Text(error, textAlign: TextAlign.center, style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 16),
-          ElevatedButton(onPressed: () => ref.invalidate(lecturersListProvider), child: const Text("Retry")),
         ],
       ),
     );

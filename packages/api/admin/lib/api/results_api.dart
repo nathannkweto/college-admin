@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of admin_api;
+part of openapi.api;
 
 
 class ResultsApi {
@@ -112,7 +112,7 @@ class ResultsApi {
   /// Parameters:
   ///
   /// * [ResultsPublishPostRequest] resultsPublishPostRequest (required):
-  Future<ResultsPublishPost200Response?> resultsPublishPost(ResultsPublishPostRequest resultsPublishPostRequest,) async {
+  Future<CoursesDelete200Response?> resultsPublishPost(ResultsPublishPostRequest resultsPublishPostRequest,) async {
     final response = await resultsPublishPostWithHttpInfo(resultsPublishPostRequest,);
     if (response.statusCode >= HttpStatus.badRequest) {
       throw ApiException(response.statusCode, await _decodeBodyBytes(response));
@@ -121,7 +121,7 @@ class ResultsApi {
     // At the time of writing this, `dart:convert` will throw an "Unexpected end of input"
     // FormatException when trying to decode an empty string.
     if (response.body.isNotEmpty && response.statusCode != HttpStatus.noContent) {
-      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'ResultsPublishPost200Response',) as ResultsPublishPost200Response;
+      return await apiClient.deserializeAsync(await _decodeBodyBytes(response), 'CoursesDelete200Response',) as CoursesDelete200Response;
     
     }
     return null;

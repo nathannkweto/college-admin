@@ -55,7 +55,7 @@ try {
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://college-app-316955810695.us-east1.run.app/api/v1/auth*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
@@ -64,6 +64,7 @@ Class | Method | HTTP request | Description
 
 ## Documentation For Models
 
+ - [Login401Response](doc//Login401Response.md)
  - [LoginRequest](doc//LoginRequest.md)
  - [LoginResponse](doc//LoginResponse.md)
  - [User](doc//User.md)

@@ -26,7 +26,7 @@ void main() {
 
     // Publish results for a specific program and semester
     //
-    //Future<ResultsPublishPost200Response> resultsPublishPost(ResultsPublishPostRequest resultsPublishPostRequest) async
+    //Future<CoursesDelete200Response> resultsPublishPost(ResultsPublishPostRequest resultsPublishPostRequest) async
     test('test resultsPublishPost', () async {
       // TODO
     });

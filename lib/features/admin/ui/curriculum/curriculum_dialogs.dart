@@ -478,10 +478,16 @@ class AddCourseToCurriculumDialog extends ConsumerStatefulWidget {
   final String programId;
   final int semesterSeq;
 
+  final String? initialCourseId;     // NEW
+  final String? initialLecturerId;
+  
+
   const AddCourseToCurriculumDialog({
     super.key,
     required this.programId,
     required this.semesterSeq,
+    this.initialCourseId,
+    this.initialLecturerId,
   });
 
   @override
@@ -492,13 +498,22 @@ class AddCourseToCurriculumDialog extends ConsumerStatefulWidget {
 class _AddCourseToCurriculumDialogState
     extends ConsumerState<AddCourseToCurriculumDialog> {
   String? _selectedCourseId;
-  String? _selectedLecturerId; // <--- NEW STATE VARIABLE
+  String? _selectedLecturerId;
+  String? _selectedDepartmentId;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCourseId = widget.initialCourseId;
+    _selectedLecturerId = widget.initialLecturerId;
+  }
 
   @override
   Widget build(BuildContext context) {
     // Watch both providers
     final coursesAsync = ref.watch(coursesProvider);
-    final lecturersAsync = ref.watch(lecturersProvider); // <--- NEW WATCH
+    final lecturersAsync = ref.watch(lecturersProvider);
+    final departmentsAsync = ref.watch(departmentsProvider);
 
     return AlertDialog(
       shape: _dialogShape,
@@ -518,14 +533,54 @@ class _AddCourseToCurriculumDialogState
               ),
               const SizedBox(height: 20),
 
+              departmentsAsync.when(
+                loading: () => const LinearProgressIndicator(),
+                error: (e, _) => Text("Error loading departments: $e"),
+                data: (departments) {
+                  return DropdownButtonFormField<String>(
+                    value: _selectedDepartmentId,
+                    isExpanded: true,
+                    decoration: _buildInputDeco(
+                      "Filter by Department",
+                      Icons.account_balance,
+                    ),
+                    hint: const Text("Select department..."),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text("All Departments"),
+                      ),
+                      ...departments.map((d) {
+                        return DropdownMenuItem(
+                          value: d.publicId,
+                          child: Text("${d.code} - ${d.name}"),
+                        );
+                      }),
+                    ],
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedDepartmentId = v;
+                        _selectedCourseId = null; // 🔥 reset course when filter changes
+                      });
+                    },
+                  );
+                },
+              ),
+
+              const SizedBox(height: 16),
+
               // 1. COURSE SELECTION
               coursesAsync.when(
                 loading: () => const LinearProgressIndicator(),
                 error: (e, _) => Text("Error loading courses: $e"),
                 data: (courses) {
                   final validCourses = courses
-                      .where((c) => c.publicId != null)
-                      .toList();
+                    .where((c) => c.publicId != null)
+                    .where((c) {
+                      if (_selectedDepartmentId == null) return true;
+                      return c.department?.publicId == _selectedDepartmentId;
+                    })
+                    .toList();
 
                   if (validCourses.isEmpty) {
                     return const Text("No courses available to assign.");
@@ -569,7 +624,7 @@ class _AddCourseToCurriculumDialogState
                       // Option to unselect lecturer
                       const DropdownMenuItem(
                         value: null,
-                        child: Text("No Default Lecturer"),
+                        child: Text("Choose Lecturer"),
                       ),
                       ...lecturers.map((l) {
                         return DropdownMenuItem(
@@ -600,17 +655,24 @@ class _AddCourseToCurriculumDialogState
           onPressed: _selectedCourseId == null
               ? null
               : () async {
-                  final success = await ref
-                      .read(curriculumControllerProvider.notifier)
-                      .addCourseToSemester(
-                        widget.programId,
-                        _selectedCourseId!,
-                        widget.semesterSeq,
-                        lecturerId:
-                            _selectedLecturerId, // <--- PASSING THE LECTURER
-                      );
+                  final notifier = ref.read(curriculumControllerProvider.notifier);
+
+                  final success = widget.initialCourseId != null
+                      ? await notifier.updateCourseInSemester(
+                          widget.programId,
+                          _selectedCourseId!,
+                          widget.semesterSeq,
+                          lecturerId: _selectedLecturerId,
+                        )
+                      : await notifier.addCourseToSemester(
+                          widget.programId,
+                          _selectedCourseId!,
+                          widget.semesterSeq,
+                          lecturerId: _selectedLecturerId,
+                        );
+
                   if (success && mounted) Navigator.pop(context);
-                },
+},
           child: const Text("Assign Course"),
         ),
       ],
@@ -1131,6 +1193,19 @@ class ProgramCurriculumDialog extends ConsumerWidget {
                                 final lecturerName = c.pivot?.lecturer?.name;
 
                                 return ListTile(
+                                  onTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => AddCourseToCurriculumDialog(
+                                        programId: program.publicId!,
+                                        semesterSeq: semSeq,
+
+                                        // 🔥 THIS is what makes it "edit"
+                                        initialCourseId: c.publicId,
+                                        initialLecturerId: c.pivot?.lecturer?.publicId,
+                                      ),
+                                    );
+                                  },
                                   dense: true,
                                   leading: CircleAvatar(
                                     backgroundColor: Colors.blue.shade50,

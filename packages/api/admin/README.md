@@ -48,26 +48,31 @@ import 'package:admin_api/api.dart';
 //defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
 
 final api_instance = AcademicsApi();
+final publicId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
 
 try {
-    final result = api_instance.coursesGet();
+    final result = api_instance.coursesDelete(publicId);
     print(result);
 } catch (e) {
-    print('Exception when calling AcademicsApi->coursesGet: $e\n');
+    print('Exception when calling AcademicsApi->coursesDelete: $e\n');
 }
 
 ```
 
 ## Documentation for API Endpoints
 
-All URIs are relative to *https://api.college.edu/api/v1/admin*
+All URIs are relative to *https://college-app-316955810695.us-east1.run.app/api/v1/admin*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+*AcademicsApi* | [**coursesDelete**](doc//AcademicsApi.md#coursesdelete) | **DELETE** /courses/{public_id} | Delete a course
 *AcademicsApi* | [**coursesGet**](doc//AcademicsApi.md#coursesget) | **GET** /courses | 
 *AcademicsApi* | [**coursesPost**](doc//AcademicsApi.md#coursespost) | **POST** /courses | 
+*AcademicsApi* | [**coursesUpdate**](doc//AcademicsApi.md#coursesupdate) | **PUT** /courses/{public_id} | Update an existing course
+*AcademicsApi* | [**departmentsDelete**](doc//AcademicsApi.md#departmentsdelete) | **DELETE** /departments/{public_id} | Delete a department
 *AcademicsApi* | [**departmentsGet**](doc//AcademicsApi.md#departmentsget) | **GET** /departments | 
 *AcademicsApi* | [**departmentsPost**](doc//AcademicsApi.md#departmentspost) | **POST** /departments | 
+*AcademicsApi* | [**departmentsUpdate**](doc//AcademicsApi.md#departmentsupdate) | **PUT** /departments/{public_id} | Update a department
 *AcademicsApi* | [**programsCoursesDelete**](doc//AcademicsApi.md#programscoursesdelete) | **DELETE** /programs/{public_id}/courses/{course_public_id} | 
 *AcademicsApi* | [**programsCoursesGet**](doc//AcademicsApi.md#programscoursesget) | **GET** /programs/{public_id}/courses | 
 *AcademicsApi* | [**programsCoursesPost**](doc//AcademicsApi.md#programscoursespost) | **POST** /programs/{public_id}/courses | 
@@ -89,16 +94,22 @@ Class | Method | HTTP request | Description
 *FinanceApi* | [**financeTransactionsGet**](doc//FinanceApi.md#financetransactionsget) | **GET** /finance/transactions | 
 *FinanceApi* | [**financeTransactionsPost**](doc//FinanceApi.md#financetransactionspost) | **POST** /finance/transactions | 
 *LecturersApi* | [**lecturersBatchUploadPost**](doc//LecturersApi.md#lecturersbatchuploadpost) | **POST** /lecturers/batch-upload | Upload CSV
+*LecturersApi* | [**lecturersDelete**](doc//LecturersApi.md#lecturersdelete) | **DELETE** /lecturers/{public_id} | Delete a lecturer
 *LecturersApi* | [**lecturersGet**](doc//LecturersApi.md#lecturersget) | **GET** /lecturers | 
 *LecturersApi* | [**lecturersPost**](doc//LecturersApi.md#lecturerspost) | **POST** /lecturers | 
+*LecturersApi* | [**lecturersShow**](doc//LecturersApi.md#lecturersshow) | **GET** /lecturers/{public_id} | Get a lecturer by ID
+*LecturersApi* | [**lecturersUpdate**](doc//LecturersApi.md#lecturersupdate) | **PUT** /lecturers/{public_id} | Update a lecturer
 *ResultsApi* | [**resultsProgramSummaryGet**](doc//ResultsApi.md#resultsprogramsummaryget) | **GET** /results/program-summary | Get list of students in a program with result summaries
 *ResultsApi* | [**resultsPublishPost**](doc//ResultsApi.md#resultspublishpost) | **POST** /results/publish | Publish results for a specific program and semester
 *ResultsApi* | [**resultsStudentTranscriptGet**](doc//ResultsApi.md#resultsstudenttranscriptget) | **GET** /results/student-transcript | Get detailed course breakdown for a specific student
 *StudentsApi* | [**studentsBatchUploadPost**](doc//StudentsApi.md#studentsbatchuploadpost) | **POST** /students/batch-upload | Upload CSV
+*StudentsApi* | [**studentsDelete**](doc//StudentsApi.md#studentsdelete) | **DELETE** /students/{public_id} | Delete a student
 *StudentsApi* | [**studentsGet**](doc//StudentsApi.md#studentsget) | **GET** /students | 
 *StudentsApi* | [**studentsPost**](doc//StudentsApi.md#studentspost) | **POST** /students | 
 *StudentsApi* | [**studentsPromotePost**](doc//StudentsApi.md#studentspromotepost) | **POST** /students/promote | 
 *StudentsApi* | [**studentsPromotionPreview**](doc//StudentsApi.md#studentspromotionpreview) | **POST** /students/promotion-preview | 
+*StudentsApi* | [**studentsShow**](doc//StudentsApi.md#studentsshow) | **GET** /students/{public_id} | Get a student by ID
+*StudentsApi* | [**studentsUpdate**](doc//StudentsApi.md#studentsupdate) | **PUT** /students/{public_id} | Update a student
 *TimetablesApi* | [**logisticsTimetableGet**](doc//TimetablesApi.md#logisticstimetableget) | **GET** /logistics/timetable | List timetable entries
 *TimetablesApi* | [**logisticsTimetablePost**](doc//TimetablesApi.md#logisticstimetablepost) | **POST** /logistics/timetable | Create a new timetable entry
 *TimetablesApi* | [**semesterEndPost**](doc//TimetablesApi.md#semesterendpost) | **POST** /semesters/{public_id}/end | 
@@ -111,8 +122,11 @@ Class | Method | HTTP request | Description
 
  - [Course](doc//Course.md)
  - [CourseResult](doc//CourseResult.md)
+ - [CoursesDelete200Response](doc//CoursesDelete200Response.md)
  - [CoursesGet200Response](doc//CoursesGet200Response.md)
  - [CoursesPostRequest](doc//CoursesPostRequest.md)
+ - [CoursesUpdate200Response](doc//CoursesUpdate200Response.md)
+ - [CoursesUpdateRequest](doc//CoursesUpdateRequest.md)
  - [DashboardFinance](doc//DashboardFinance.md)
  - [DashboardFinanceGet200Response](doc//DashboardFinanceGet200Response.md)
  - [DashboardMetrics](doc//DashboardMetrics.md)
@@ -120,6 +134,8 @@ Class | Method | HTTP request | Description
  - [Department](doc//Department.md)
  - [DepartmentsGet200Response](doc//DepartmentsGet200Response.md)
  - [DepartmentsPostRequest](doc//DepartmentsPostRequest.md)
+ - [DepartmentsUpdate200Response](doc//DepartmentsUpdate200Response.md)
+ - [DepartmentsUpdateRequest](doc//DepartmentsUpdateRequest.md)
  - [ExamPaper](doc//ExamPaper.md)
  - [ExamPaperRequest](doc//ExamPaperRequest.md)
  - [ExamSchedulesList200Response](doc//ExamSchedulesList200Response.md)
@@ -137,6 +153,9 @@ Class | Method | HTTP request | Description
  - [Lecturer](doc//Lecturer.md)
  - [LecturersGet200Response](doc//LecturersGet200Response.md)
  - [LecturersPostRequest](doc//LecturersPostRequest.md)
+ - [LecturersShow200Response](doc//LecturersShow200Response.md)
+ - [LecturersUpdate200Response](doc//LecturersUpdate200Response.md)
+ - [LecturersUpdateRequest](doc//LecturersUpdateRequest.md)
  - [LogisticsTimetableGet200Response](doc//LogisticsTimetableGet200Response.md)
  - [LogisticsTimetablePost201Response](doc//LogisticsTimetablePost201Response.md)
  - [LogisticsTimetablePostRequest](doc//LogisticsTimetablePostRequest.md)
@@ -152,7 +171,6 @@ Class | Method | HTTP request | Description
  - [ProgramsPostRequest](doc//ProgramsPostRequest.md)
  - [Qualification](doc//Qualification.md)
  - [QualificationsGet200Response](doc//QualificationsGet200Response.md)
- - [ResultsPublishPost200Response](doc//ResultsPublishPost200Response.md)
  - [ResultsPublishPostRequest](doc//ResultsPublishPostRequest.md)
  - [Semester](doc//Semester.md)
  - [SemesterResponse](doc//SemesterResponse.md)
@@ -165,6 +183,9 @@ Class | Method | HTTP request | Description
  - [StudentsPostRequest](doc//StudentsPostRequest.md)
  - [StudentsPromotePostRequest](doc//StudentsPromotePostRequest.md)
  - [StudentsPromotionPreview200Response](doc//StudentsPromotionPreview200Response.md)
+ - [StudentsShow200Response](doc//StudentsShow200Response.md)
+ - [StudentsUpdate200Response](doc//StudentsUpdate200Response.md)
+ - [StudentsUpdateRequest](doc//StudentsUpdateRequest.md)
  - [TimetableEntry](doc//TimetableEntry.md)
 
 

@@ -14,9 +14,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  // Local state for UI feedback
   String? _errorMessage;
   bool _isLoading = false;
+  bool _obscurePassword = true;
+
+  bool get _isFormValid =>
+      _emailController.text.isNotEmpty &&
+      _passwordController.text.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  void _clearError() {
+    if (_errorMessage != null) {
+      setState(() => _errorMessage = null);
+    }
+  }
 
   @override
   void dispose() {
@@ -25,166 +40,206 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     super.dispose();
   }
 
+  //
+  // 🔥 CLEAN LOGIN HANDLER
+  //
   Future<void> _handleLogin() async {
-    // 1. Validate Input
-    if (!_formKey.currentState!.validate()) {
-      print("DEBUG: Form validation failed");
-      return;
-    }
+    // Dismiss keyboard immediately to clear up screen space
+    FocusScope.of(context).unfocus();
 
-    // 2. Start Loading
+    if (!_formKey.currentState!.validate()) return;
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      print("DEBUG: Attempting login for ${_emailController.text}...");
-
-      // 3. Call the Provider
-      // We expect this method to return null on success, or an error string on failure.
-      final error = await ref
-          .read(authProvider.notifier)
-          .login(_emailController.text.trim(), _passwordController.text.trim());
-
-      print("DEBUG: API Response received. Error: $error");
-
-      // 4. Handle Result
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          if (error != null) {
-            _errorMessage = error.replaceAll("Exception: ", "");
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(_errorMessage!),
-                backgroundColor: Colors.red,
-              ),
-            );
-          } else {
-            // SUCCESS!
-            print(
-              "DEBUG: Login Successful. AuthWrapper will now switch pages.",
-            );
-          }
-        });
-      }
-    } catch (e, stack) {
-      // 5. Safety Net: Catch unexpected crashes (parsing errors, null pointers, etc.)
-      print("CRITICAL ERROR: $e");
-      print(stack);
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _errorMessage = "Unexpected error: $e";
-        });
-      }
+      await ref.read(authProvider.notifier).login(
+            _emailController.text.trim(),
+            _passwordController.text.trim(),
+          );
+      // Success → handled by AuthWrapper
+    } on InvalidCredentialsException {
+      _showError("Email or password incorrect");
+    } on NetworkException {
+      _showError("Check your internet connection");
+    } on ServerException {
+      _showError("Login failed, please try again later");
+    } catch (_) {
+      _showError("Something went wrong");
     }
+  }
+
+  //
+  // CENTRALIZED ERROR HANDLING
+  //
+  void _showError(String message) {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+      _errorMessage = message;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDisabled = _isLoading || !_isFormValid;
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Container(
+          child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Safe Image Loading
-                  Image.asset(
-                    'assets/images/logo.png',
-                    height: 100,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
-                        Icons.school,
-                        size: 100,
-                        color: Colors.blue,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    "MATEM College",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Error Box (Shows only if there is an error)
-                  if (_errorMessage != null)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red.shade200),
+            child: AbsorbPointer(
+              absorbing: _isLoading,
+              child: Form(
+                key: _formKey,
+                child: AutofillGroup(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: 100,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.school,
+                          size: 100,
+                          color: Colors.blue,
+                        ),
                       ),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(color: Colors.red.shade800),
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        "MATEM College",
                         textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 32),
 
-                  // Email Input
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(
-                      labelText: "Email",
-                      prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) => value!.isEmpty ? "Enter email" : null,
-                  ),
-                  const SizedBox(height: 16),
+                      if (_errorMessage != null)
+                        _ErrorBox(message: _errorMessage!),
 
-                  // Password Input
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: "Password",
-                      prefixIcon: Icon(Icons.lock_outline),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) =>
-                        value!.isEmpty ? "Enter password" : null,
-                  ),
-                  const SizedBox(height: 24),
+                      //
+                      // EMAIL
+                      //
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autofillHints: const [AutofillHints.email],
+                        onChanged: (_) {
+                          setState(() {});
+                          _clearError();
+                        },
+                        decoration: const InputDecoration(
+                          labelText: "Email",
+                          prefixIcon: Icon(Icons.email_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return "Enter email";
+                          }
+                          if (!value.contains('@')) {
+                            return "Enter a valid email";
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
 
-                  // Login Button
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: const Color.fromARGB(255, 2, 52, 108),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                      //
+                      // PASSWORD
+                      //
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        autofillHints: const [AutofillHints.password],
+                        onChanged: (_) {
+                          setState(() {});
+                          _clearError();
+                        },
+                        onFieldSubmitted: (_) => _handleLogin(),
+                        decoration: InputDecoration(
+                          labelText: "Password",
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
                             ),
-                          )
-                        : const Text("Login"),
+                            onPressed: () {
+                              setState(() =>
+                                  _obscurePassword = !_obscurePassword);
+                            },
+                          ),
+                        ),
+                        validator: (value) => value == null || value.isEmpty
+                            ? "Enter password"
+                            : null,
+                      ),
+                      const SizedBox(height: 24),
+
+                      //
+                      // BUTTON
+                      //
+                      ElevatedButton(
+                        onPressed: isDisabled ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: const Color.fromARGB(255, 2, 52, 108),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text("Login"),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ErrorBox extends StatelessWidget {
+  final String message;
+
+  const _ErrorBox({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.red.shade200),
+      ),
+      child: Text(
+        message,
+        style: TextStyle(color: Colors.red.shade800),
+        textAlign: TextAlign.center,
       ),
     );
   }

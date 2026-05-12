@@ -6,6 +6,7 @@ import 'package:college_admin/features/auth/login_page.dart';
 import 'package:college_admin/features/admin/ui/admin_layout.dart';
 import 'package:college_admin/features/student/ui/student_layout.dart';
 import 'package:college_admin/features/lecturer/ui/lecturer_layout.dart';
+import 'core/services/navigator_service.dart';
 
 class CollegeApp extends StatelessWidget {
   const CollegeApp({super.key});
@@ -13,15 +14,13 @@ class CollegeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'MATEM',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 2, 52, 108)),
         useMaterial3: true,
       ),
-      // REMOVE the builder from here. It causes the "No Overlay" error.
-
-      // AuthWrapper now handles the logic AND the SelectionArea
       home: const AuthWrapper(),
     );
   }
@@ -34,36 +33,43 @@ class AuthWrapper extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
 
-    // WRAP EVERYTHING HERE IN SELECTIONAREA
-    // Now it is inside the Navigator, so it can find the Overlay!
-    return SelectionArea(
-      child: _buildContent(authState),
-    );
+    return _buildContent(authState);
   }
 
-  // Helper method to keep the build method clean
   Widget _buildContent(AuthState authState) {
-    // 1. Check Loading
+    // 1. Initial Boot / Loading State
     if (authState.isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // A little UX polish: showing the app name during boot is 
+              // much better than a random spinner on a blank screen.
+              Text(
+                "MATEM College",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey),
+              ),
+              SizedBox(height: 24),
+              CircularProgressIndicator(),
+            ],
+          ),
+        ),
       );
     }
 
-    // 2. Check Authentication
+    // 2. Not Authenticated -> Show Login
     if (!authState.isAuthenticated) {
       return const LoginPage();
     }
 
-    // 3. Check Role
+    // 3. Authenticated -> Route by Role
     switch (authState.role) {
       case UserRole.admin:
         return const AdminLayout();
       case UserRole.lecturer:
         return const LecturerLayout();
       case UserRole.student:
-        return const StudentLayout();
-      default:
         return const StudentLayout();
     }
   }

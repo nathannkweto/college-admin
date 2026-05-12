@@ -24,6 +24,13 @@ void main() {
       // TODO
     });
 
+    // Delete a lecturer
+    //
+    //Future lecturersDelete(String publicId) async
+    test('test lecturersDelete', () async {
+      // TODO
+    });
+
     //Future<LecturersGet200Response> lecturersGet() async
     test('test lecturersGet', () async {
       // TODO
@@ -31,6 +38,20 @@ void main() {
 
     //Future lecturersPost(LecturersPostRequest lecturersPostRequest) async
     test('test lecturersPost', () async {
+      // TODO
+    });
+
+    // Get a lecturer by ID
+    //
+    //Future<LecturersShow200Response> lecturersShow(String publicId) async
+    test('test lecturersShow', () async {
+      // TODO
+    });
+
+    // Update a lecturer
+    //
+    //Future<LecturersUpdate200Response> lecturersUpdate(String publicId, LecturersUpdateRequest lecturersUpdateRequest) async
+    test('test lecturersUpdate', () async {
       // TODO
     });
 

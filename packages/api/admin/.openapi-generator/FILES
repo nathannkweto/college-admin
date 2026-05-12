@@ -6,8 +6,11 @@ analysis_options.yaml
 doc/AcademicsApi.md
 doc/Course.md
 doc/CourseResult.md
+doc/CoursesDelete200Response.md
 doc/CoursesGet200Response.md
 doc/CoursesPostRequest.md
+doc/CoursesUpdate200Response.md
+doc/CoursesUpdateRequest.md
 doc/DashboardApi.md
 doc/DashboardFinance.md
 doc/DashboardFinanceGet200Response.md
@@ -16,6 +19,8 @@ doc/DashboardMetricsGet200Response.md
 doc/Department.md
 doc/DepartmentsGet200Response.md
 doc/DepartmentsPostRequest.md
+doc/DepartmentsUpdate200Response.md
+doc/DepartmentsUpdateRequest.md
 doc/ExamPaper.md
 doc/ExamPaperRequest.md
 doc/ExamSchedulesList200Response.md
@@ -36,6 +41,9 @@ doc/Lecturer.md
 doc/LecturersApi.md
 doc/LecturersGet200Response.md
 doc/LecturersPostRequest.md
+doc/LecturersShow200Response.md
+doc/LecturersUpdate200Response.md
+doc/LecturersUpdateRequest.md
 doc/LogisticsTimetableGet200Response.md
 doc/LogisticsTimetablePost201Response.md
 doc/LogisticsTimetablePostRequest.md
@@ -52,7 +60,6 @@ doc/ProgramsPostRequest.md
 doc/Qualification.md
 doc/QualificationsGet200Response.md
 doc/ResultsApi.md
-doc/ResultsPublishPost200Response.md
 doc/ResultsPublishPostRequest.md
 doc/Semester.md
 doc/SemesterResponse.md
@@ -66,6 +73,9 @@ doc/StudentsGet200Response.md
 doc/StudentsPostRequest.md
 doc/StudentsPromotePostRequest.md
 doc/StudentsPromotionPreview200Response.md
+doc/StudentsShow200Response.md
+doc/StudentsUpdate200Response.md
+doc/StudentsUpdateRequest.md
 doc/TimetableEntry.md
 doc/TimetablesApi.md
 git_push.sh
@@ -88,8 +98,11 @@ lib/auth/http_bearer_auth.dart
 lib/auth/oauth.dart
 lib/model/course.dart
 lib/model/course_result.dart
+lib/model/courses_delete200_response.dart
 lib/model/courses_get200_response.dart
 lib/model/courses_post_request.dart
+lib/model/courses_update200_response.dart
+lib/model/courses_update_request.dart
 lib/model/dashboard_finance.dart
 lib/model/dashboard_finance_get200_response.dart
 lib/model/dashboard_metrics.dart
@@ -97,6 +110,8 @@ lib/model/dashboard_metrics_get200_response.dart
 lib/model/department.dart
 lib/model/departments_get200_response.dart
 lib/model/departments_post_request.dart
+lib/model/departments_update200_response.dart
+lib/model/departments_update_request.dart
 lib/model/exam_paper.dart
 lib/model/exam_paper_request.dart
 lib/model/exam_schedules_list200_response.dart
@@ -114,6 +129,9 @@ lib/model/finance_transactions_post_request.dart
 lib/model/lecturer.dart
 lib/model/lecturers_get200_response.dart
 lib/model/lecturers_post_request.dart
+lib/model/lecturers_show200_response.dart
+lib/model/lecturers_update200_response.dart
+lib/model/lecturers_update_request.dart
 lib/model/logistics_timetable_get200_response.dart
 lib/model/logistics_timetable_post201_response.dart
 lib/model/logistics_timetable_post_request.dart
@@ -129,7 +147,6 @@ lib/model/programs_get200_response.dart
 lib/model/programs_post_request.dart
 lib/model/qualification.dart
 lib/model/qualifications_get200_response.dart
-lib/model/results_publish_post200_response.dart
 lib/model/results_publish_post_request.dart
 lib/model/semester.dart
 lib/model/semester_response.dart
@@ -142,13 +159,19 @@ lib/model/students_get200_response.dart
 lib/model/students_post_request.dart
 lib/model/students_promote_post_request.dart
 lib/model/students_promotion_preview200_response.dart
+lib/model/students_show200_response.dart
+lib/model/students_update200_response.dart
+lib/model/students_update_request.dart
 lib/model/timetable_entry.dart
 pubspec.yaml
 test/academics_api_test.dart
 test/course_result_test.dart
 test/course_test.dart
+test/courses_delete200_response_test.dart
 test/courses_get200_response_test.dart
 test/courses_post_request_test.dart
+test/courses_update200_response_test.dart
+test/courses_update_request_test.dart
 test/dashboard_api_test.dart
 test/dashboard_finance_get200_response_test.dart
 test/dashboard_finance_test.dart
@@ -157,6 +180,8 @@ test/dashboard_metrics_test.dart
 test/department_test.dart
 test/departments_get200_response_test.dart
 test/departments_post_request_test.dart
+test/departments_update200_response_test.dart
+test/departments_update_request_test.dart
 test/exam_paper_request_test.dart
 test/exam_paper_test.dart
 test/exam_schedules_list200_response_test.dart
@@ -177,6 +202,9 @@ test/lecturer_test.dart
 test/lecturers_api_test.dart
 test/lecturers_get200_response_test.dart
 test/lecturers_post_request_test.dart
+test/lecturers_show200_response_test.dart
+test/lecturers_update200_response_test.dart
+test/lecturers_update_request_test.dart
 test/logistics_timetable_get200_response_test.dart
 test/logistics_timetable_post201_response_test.dart
 test/logistics_timetable_post_request_test.dart
@@ -193,7 +221,6 @@ test/programs_post_request_test.dart
 test/qualification_test.dart
 test/qualifications_get200_response_test.dart
 test/results_api_test.dart
-test/results_publish_post200_response_test.dart
 test/results_publish_post_request_test.dart
 test/semester_response_test.dart
 test/semester_test.dart
@@ -207,5 +234,8 @@ test/students_get200_response_test.dart
 test/students_post_request_test.dart
 test/students_promote_post_request_test.dart
 test/students_promotion_preview200_response_test.dart
+test/students_show200_response_test.dart
+test/students_update200_response_test.dart
+test/students_update_request_test.dart
 test/timetable_entry_test.dart
 test/timetables_api_test.dart

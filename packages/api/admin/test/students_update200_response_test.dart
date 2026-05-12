@@ -11,13 +11,18 @@
 import 'package:admin_api/api.dart';
 import 'package:test/test.dart';
 
-// tests for ResultsPublishPost200Response
+// tests for StudentsUpdate200Response
 void main() {
-  // final instance = ResultsPublishPost200Response();
+  // final instance = StudentsUpdate200Response();
 
-  group('test ResultsPublishPost200Response', () {
+  group('test StudentsUpdate200Response', () {
     // String message
     test('to test the property `message`', () async {
+      // TODO
+    });
+
+    // Student data
+    test('to test the property `data`', () async {
       // TODO
     });
 

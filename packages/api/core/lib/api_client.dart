@@ -8,10 +8,10 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of core_api;
+part of openapi.api;
 
 class ApiClient {
-  ApiClient({this.basePath = 'https://college-app-316955810695.us-east1.run.app/api/v1', this.authentication,});
+  ApiClient({this.basePath = 'https://college-app-316955810695.us-east1.run.app/api/v1/auth', this.authentication,});
 
   final String basePath;
   final Authentication? authentication;
@@ -182,6 +182,8 @@ class ApiClient {
           return valueString == 'true' || valueString == '1';
         case 'DateTime':
           return value is DateTime ? value : DateTime.tryParse(value);
+        case 'Login401Response':
+          return Login401Response.fromJson(value);
         case 'LoginRequest':
           return LoginRequest.fromJson(value);
         case 'LoginResponse':

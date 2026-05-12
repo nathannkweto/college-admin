@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-part of admin_api;
+part of openapi.api;
 
 class ApiClient {
   ApiClient({this.basePath = 'https://college-app-316955810695.us-east1.run.app/api/v1/admin', this.authentication,});
@@ -186,10 +186,16 @@ class ApiClient {
           return Course.fromJson(value);
         case 'CourseResult':
           return CourseResult.fromJson(value);
+        case 'CoursesDelete200Response':
+          return CoursesDelete200Response.fromJson(value);
         case 'CoursesGet200Response':
           return CoursesGet200Response.fromJson(value);
         case 'CoursesPostRequest':
           return CoursesPostRequest.fromJson(value);
+        case 'CoursesUpdate200Response':
+          return CoursesUpdate200Response.fromJson(value);
+        case 'CoursesUpdateRequest':
+          return CoursesUpdateRequest.fromJson(value);
         case 'DashboardFinance':
           return DashboardFinance.fromJson(value);
         case 'DashboardFinanceGet200Response':
@@ -204,6 +210,10 @@ class ApiClient {
           return DepartmentsGet200Response.fromJson(value);
         case 'DepartmentsPostRequest':
           return DepartmentsPostRequest.fromJson(value);
+        case 'DepartmentsUpdate200Response':
+          return DepartmentsUpdate200Response.fromJson(value);
+        case 'DepartmentsUpdateRequest':
+          return DepartmentsUpdateRequest.fromJson(value);
         case 'ExamPaper':
           return ExamPaper.fromJson(value);
         case 'ExamPaperRequest':
@@ -238,6 +248,12 @@ class ApiClient {
           return LecturersGet200Response.fromJson(value);
         case 'LecturersPostRequest':
           return LecturersPostRequest.fromJson(value);
+        case 'LecturersShow200Response':
+          return LecturersShow200Response.fromJson(value);
+        case 'LecturersUpdate200Response':
+          return LecturersUpdate200Response.fromJson(value);
+        case 'LecturersUpdateRequest':
+          return LecturersUpdateRequest.fromJson(value);
         case 'LogisticsTimetableGet200Response':
           return LogisticsTimetableGet200Response.fromJson(value);
         case 'LogisticsTimetablePost201Response':
@@ -268,8 +284,6 @@ class ApiClient {
           return Qualification.fromJson(value);
         case 'QualificationsGet200Response':
           return QualificationsGet200Response.fromJson(value);
-        case 'ResultsPublishPost200Response':
-          return ResultsPublishPost200Response.fromJson(value);
         case 'ResultsPublishPostRequest':
           return ResultsPublishPostRequest.fromJson(value);
         case 'Semester':
@@ -294,6 +308,12 @@ class ApiClient {
           return StudentsPromotePostRequest.fromJson(value);
         case 'StudentsPromotionPreview200Response':
           return StudentsPromotionPreview200Response.fromJson(value);
+        case 'StudentsShow200Response':
+          return StudentsShow200Response.fromJson(value);
+        case 'StudentsUpdate200Response':
+          return StudentsUpdate200Response.fromJson(value);
+        case 'StudentsUpdateRequest':
+          return StudentsUpdateRequest.fromJson(value);
         case 'TimetableEntry':
           return TimetableEntry.fromJson(value);
         default:

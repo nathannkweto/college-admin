@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-library admin_api;
+library openapi.api;
 
 import 'dart:async';
 import 'dart:convert';
@@ -39,8 +39,11 @@ part 'api/timetables_api.dart';
 
 part 'model/course.dart';
 part 'model/course_result.dart';
+part 'model/courses_delete200_response.dart';
 part 'model/courses_get200_response.dart';
 part 'model/courses_post_request.dart';
+part 'model/courses_update200_response.dart';
+part 'model/courses_update_request.dart';
 part 'model/dashboard_finance.dart';
 part 'model/dashboard_finance_get200_response.dart';
 part 'model/dashboard_metrics.dart';
@@ -48,6 +51,8 @@ part 'model/dashboard_metrics_get200_response.dart';
 part 'model/department.dart';
 part 'model/departments_get200_response.dart';
 part 'model/departments_post_request.dart';
+part 'model/departments_update200_response.dart';
+part 'model/departments_update_request.dart';
 part 'model/exam_paper.dart';
 part 'model/exam_paper_request.dart';
 part 'model/exam_schedules_list200_response.dart';
@@ -65,6 +70,9 @@ part 'model/finance_transactions_post_request.dart';
 part 'model/lecturer.dart';
 part 'model/lecturers_get200_response.dart';
 part 'model/lecturers_post_request.dart';
+part 'model/lecturers_show200_response.dart';
+part 'model/lecturers_update200_response.dart';
+part 'model/lecturers_update_request.dart';
 part 'model/logistics_timetable_get200_response.dart';
 part 'model/logistics_timetable_post201_response.dart';
 part 'model/logistics_timetable_post_request.dart';
@@ -80,7 +88,6 @@ part 'model/programs_get200_response.dart';
 part 'model/programs_post_request.dart';
 part 'model/qualification.dart';
 part 'model/qualifications_get200_response.dart';
-part 'model/results_publish_post200_response.dart';
 part 'model/results_publish_post_request.dart';
 part 'model/semester.dart';
 part 'model/semester_response.dart';
@@ -93,6 +100,9 @@ part 'model/students_get200_response.dart';
 part 'model/students_post_request.dart';
 part 'model/students_promote_post_request.dart';
 part 'model/students_promotion_preview200_response.dart';
+part 'model/students_show200_response.dart';
+part 'model/students_update200_response.dart';
+part 'model/students_update_request.dart';
 part 'model/timetable_entry.dart';
 
 

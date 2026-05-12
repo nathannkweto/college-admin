@@ -8,7 +8,7 @@
 // ignore_for_file: constant_identifier_names
 // ignore_for_file: lines_longer_than_80_chars
 
-library core_api;
+library openapi.api;
 
 import 'dart:async';
 import 'dart:convert';
@@ -30,6 +30,7 @@ part 'auth/http_bearer_auth.dart';
 
 part 'api/default_api.dart';
 
+part 'model/login401_response.dart';
 part 'model/login_request.dart';
 part 'model/login_response.dart';
 part 'model/user.dart';

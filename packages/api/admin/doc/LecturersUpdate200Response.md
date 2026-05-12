@@ -1,4 +1,4 @@
-# admin_api.model.ResultsPublishPost200Response
+# admin_api.model.LecturersUpdate200Response
 
 ## Load the model package
 ```dart
@@ -9,6 +9,7 @@ import 'package:admin_api/api.dart';
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **message** | **String** |  | [optional] 
+**data** | [**Lecturer**](Lecturer.md) |  | [optional] 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

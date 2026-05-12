@@ -5,7 +5,7 @@
 import 'package:core_api/api.dart';
 ```
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://college-app-316955810695.us-east1.run.app/api/v1/auth*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------

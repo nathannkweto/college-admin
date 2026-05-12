@@ -5,14 +5,18 @@
 import 'package:admin_api/api.dart';
 ```
 
-All URIs are relative to *https://api.college.edu/api/v1/admin*
+All URIs are relative to *https://college-app-316955810695.us-east1.run.app/api/v1/admin*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**coursesDelete**](AcademicsApi.md#coursesdelete) | **DELETE** /courses/{public_id} | Delete a course
 [**coursesGet**](AcademicsApi.md#coursesget) | **GET** /courses | 
 [**coursesPost**](AcademicsApi.md#coursespost) | **POST** /courses | 
+[**coursesUpdate**](AcademicsApi.md#coursesupdate) | **PUT** /courses/{public_id} | Update an existing course
+[**departmentsDelete**](AcademicsApi.md#departmentsdelete) | **DELETE** /departments/{public_id} | Delete a department
 [**departmentsGet**](AcademicsApi.md#departmentsget) | **GET** /departments | 
 [**departmentsPost**](AcademicsApi.md#departmentspost) | **POST** /departments | 
+[**departmentsUpdate**](AcademicsApi.md#departmentsupdate) | **PUT** /departments/{public_id} | Update a department
 [**programsCoursesDelete**](AcademicsApi.md#programscoursesdelete) | **DELETE** /programs/{public_id}/courses/{course_public_id} | 
 [**programsCoursesGet**](AcademicsApi.md#programscoursesget) | **GET** /programs/{public_id}/courses | 
 [**programsCoursesPost**](AcademicsApi.md#programscoursespost) | **POST** /programs/{public_id}/courses | 
@@ -21,6 +25,53 @@ Method | HTTP request | Description
 [**qualificationsGet**](AcademicsApi.md#qualificationsget) | **GET** /qualifications | 
 [**qualificationsPost**](AcademicsApi.md#qualificationspost) | **POST** /qualifications | 
 
+
+# **coursesDelete**
+> CoursesDelete200Response coursesDelete(publicId)
+
+Delete a course
+
+### Example
+```dart
+import 'package:admin_api/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AcademicsApi();
+final publicId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+
+try {
+    final result = api_instance.coursesDelete(publicId);
+    print(result);
+} catch (e) {
+    print('Exception when calling AcademicsApi->coursesDelete: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **publicId** | **String**|  | 
+
+### Return type
+
+[**CoursesDelete200Response**](CoursesDelete200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **coursesGet**
 > CoursesGet200Response coursesGet()
@@ -111,6 +162,101 @@ void (empty response body)
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **coursesUpdate**
+> CoursesUpdate200Response coursesUpdate(publicId, coursesUpdateRequest)
+
+Update an existing course
+
+### Example
+```dart
+import 'package:admin_api/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AcademicsApi();
+final publicId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final coursesUpdateRequest = CoursesUpdateRequest(); // CoursesUpdateRequest | 
+
+try {
+    final result = api_instance.coursesUpdate(publicId, coursesUpdateRequest);
+    print(result);
+} catch (e) {
+    print('Exception when calling AcademicsApi->coursesUpdate: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **publicId** | **String**|  | 
+ **coursesUpdateRequest** | [**CoursesUpdateRequest**](CoursesUpdateRequest.md)|  | 
+
+### Return type
+
+[**CoursesUpdate200Response**](CoursesUpdate200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **departmentsDelete**
+> departmentsDelete(publicId)
+
+Delete a department
+
+### Example
+```dart
+import 'package:admin_api/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AcademicsApi();
+final publicId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+
+try {
+    api_instance.departmentsDelete(publicId);
+} catch (e) {
+    print('Exception when calling AcademicsApi->departmentsDelete: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **publicId** | **String**|  | 
+
+### Return type
+
+void (empty response body)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **departmentsGet**
 > DepartmentsGet200Response departmentsGet()
 
@@ -197,6 +343,55 @@ void (empty response body)
 
  - **Content-Type**: application/json
  - **Accept**: Not defined
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **departmentsUpdate**
+> DepartmentsUpdate200Response departmentsUpdate(publicId, departmentsUpdateRequest)
+
+Update a department
+
+### Example
+```dart
+import 'package:admin_api/api.dart';
+// TODO Configure HTTP Bearer authorization: bearerAuth
+// Case 1. Use String Token
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken('YOUR_ACCESS_TOKEN');
+// Case 2. Use Function which generate token.
+// String yourTokenGeneratorFunction() { ... }
+//defaultApiClient.getAuthentication<HttpBearerAuth>('bearerAuth').setAccessToken(yourTokenGeneratorFunction);
+
+final api_instance = AcademicsApi();
+final publicId = 38400000-8cf0-11bd-b23e-10b96e4ef00d; // String | 
+final departmentsUpdateRequest = DepartmentsUpdateRequest(); // DepartmentsUpdateRequest | 
+
+try {
+    final result = api_instance.departmentsUpdate(publicId, departmentsUpdateRequest);
+    print(result);
+} catch (e) {
+    print('Exception when calling AcademicsApi->departmentsUpdate: $e\n');
+}
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **publicId** | **String**|  | 
+ **departmentsUpdateRequest** | [**DepartmentsUpdateRequest**](DepartmentsUpdateRequest.md)|  | 
+
+### Return type
+
+[**DepartmentsUpdate200Response**](DepartmentsUpdate200Response.md)
+
+### Authorization
+
+[bearerAuth](../README.md#bearerAuth)
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

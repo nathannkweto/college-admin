@@ -217,6 +217,38 @@ class CurriculumController extends StateNotifier<AsyncValue<void>> {
     });
   }
 
+    Future<bool> updateCourseInSemester(
+    String programId,
+    String courseId,
+    int semesterSeq, {
+    String? lecturerId,
+  }) async {
+    return _perform(() async {
+      // ⚠️ Current backend limitation:
+      // We don't have a direct "update" endpoint for ProgramCourse (pivot),
+      // so we simulate update by removing and re-adding.
+
+      await ApiService().academics.programsCoursesDelete(
+        programId,
+        courseId,
+      );
+
+      final req = admin.ProgramsCoursesPostRequest(
+        coursePublicId: courseId,
+        semesterSequence: semesterSeq,
+        lecturerPublicId: lecturerId,
+      );
+
+      await ApiService().academics.programsCoursesPost(
+        programId,
+        req,
+      );
+
+      // 🔄 Refresh UI
+      ref.invalidate(curriculumProvider(programId));
+    });
+  }
+  
   Future<bool> removeCourseFromProgram(String programId, String courseId) async {
     return _perform(() async {
       await ApiService().academics.programsCoursesDelete(programId, courseId);
